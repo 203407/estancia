@@ -1,11 +1,16 @@
+import os
+import shutil
 import tkinter as tk
 from tkinter import END, Scrollbar, ttk
 from tkinter import messagebox
+from tkinter import filedialog
 import customtkinter as ctk 
 from PIL import Image
 from tkintertable import TableCanvas
 import psycopg2
 import json
+import urllib.request
+from urllib.request import urlretrieve
 
 
 import matplotlib.pyplot as plt
@@ -63,7 +68,7 @@ class Window(ctk.CTk):
         nav_btn_4.place(relx=0.600, rely=0.625, anchor=tk.CENTER)
         nav_btn_5 = ctk.CTkButton(master=self.top_frame, text="Reprobados", width=40 , command=self.view5, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
         nav_btn_5.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
-        nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="incidencias", width=40 , command=self.view6, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
+        nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="incidencias", width=40 , corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
         nav_btn_6.place(relx=0.757, rely=0.725, anchor=tk.CENTER)
 
 
@@ -158,9 +163,7 @@ class Window(ctk.CTk):
         # tree = ttk.Treeview(frame_table, columns=cols)
 
 
-        style = ttk.Style()
-        style.configure("Treeview", treelinewidth=20,padding=5)
-        tree = ttk.Treeview(frame_table,height=3,columns=cols,style="Treeview") # definir cuantas columnas tendra la tabla
+        tree = ttk.Treeview(frame_table,height=3,columns=cols) # definir cuantas columnas tendra la tabla
         tree.place(x=10,y=20, width=1500,height=400) # le
 
 
@@ -172,6 +175,12 @@ class Window(ctk.CTk):
             tree.heading(f"Inc{i+1}", text=f"Inc{i+1}",anchor="w")
             tree.heading(f"Repro{i+1}", text=f"Repro{i+1}",anchor="w")
 
+
+        style = ttk.Style()
+        style.configure("Custom.Treeview", borderwidth=10)
+
+        # aplicar estilo personalizado al Treeview
+        tree.configure(style="Custom.Treeview")
 
 
         def on_cell_click(event):
@@ -186,7 +195,7 @@ class Window(ctk.CTk):
             # valor_celda = treeview.item(3, "values")[1] # "values" se refiere a las columnas de datos
             
             if col_title in self.datas:
-                messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")
+                # messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")
                 print(f"Cell clicked: row={row_id}, col={col_id}, heading={col_title}")
                 #print(cell_value)
                 self.navigate()
@@ -202,21 +211,19 @@ class Window(ctk.CTk):
 
         #para definir la scrollbar hortizontal
         scroll_databaseH = Scrollbar(frame_table, orient="horizontal", command=tree.xview)
-        scroll_databaseH.place(x=10, y=107, width=1300)
+        scroll_databaseH.place(x=10, y=350, width=1300)
         tree.configure(xscrollcommand=scroll_databaseH.set)
-
+        k = 1
         for x in self.alumnos:
-            tree.insert("", "end", text="1", values=[x[2], x[1]] + ["2", "1"]*num_pairs)
+            tree.insert("", "end", text=k, values=[x[2], x[1]] + [" ", " "]*num_pairs)
+            k+=1
                 
 
-        self.btnk = ctk.CTkButton(master=self.bottom_frame3, text="checkout", width= 140, height= 35, command=self.reco, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
-        self.btnk.place(relx= 0.5, rely=0.4, anchor=tk.CENTER)
 
     def reco(self):
         #print(self.asignaturas)
         self.selectData()
         
-
     def editar_celda(event, tabla):
         columna = tabla.identify_column(event.x)
         fila = tabla.identify_row(event.y)
@@ -257,7 +264,6 @@ class Window(ctk.CTk):
         table.pack()
         #self.test_tabla1(frame_table)
 
-
     def view5(self):
         #reprobados
         self.alumnos = []
@@ -291,9 +297,7 @@ class Window(ctk.CTk):
 
         frame_right = ctk.CTkFrame(master=self.bottom_frame5, width= 900, height= 500,corner_radius=0, fg_color="transparent")
         frame_right.grid(padx= 36, pady= 35, row=0, column = 1)
-        #frame_right.grid_propagate()
-        self.btnvk = ctk.CTkButton(master=self.bottom_frame5, text="checkout", width= 140, height= 35, command=self.veri, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
-        self.btnvk.place(relx= 0.5, rely=0.4, anchor=tk.CENTER)
+        
 
         self.get_asignaturas(frame_leftB, button_area, frame_right, 5)
 
@@ -304,37 +308,145 @@ class Window(ctk.CTk):
 
     # def view6(self,matricula,titulo):
 
-    def view6(self):
+    def view6(self,matricula,titulo):
         self.bottom_frame6.grid(padx=0, pady=0, row=1, column=0)
+
+        cont = 0
+        for x in self.datas:
+            if x == titulo:
+                cont += 1;
+                break;
+            else:
+                cont += 1;
+        incidencias = []
+        print(cont)
+        alumno = self.getByMatricula(matricula)
+        print(alumno)       
+        incidencias = self.getIncidencias(matricula,cont)
+        print(incidencias)
+        frame_table1 = ctk.CTkFrame(master=self.bottom_frame6, width= 1100, height= 385,corner_radius=0)        
+        frame_table2 = ctk.CTkFrame(master=self.bottom_frame6, width= 1100, height= 385,corner_radius=0)
         
-
-        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1100, height= 385,corner_radius=0,fg_color="white")
-        frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
         
-
-
-
-        # info_label = ctk.CTkLabel(master=self.bottom_frame6, corner_radius=0, text=matricula, font=("Helvetica",  24, 'bold'))
-        # info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
+        def navigate2():
+            frame_table1.grid_remove()
+            frame_table2.grid_remove()          
         
-        # info_label = ctk.CTkLabel(master=self.bottom_frame6, corner_radius=0, text=titulo, font=("Helvetica",  24, 'bold'))
-        # info_label.place(relx=0.15, rely=0.20, anchor=tk.CENTER)
+        def viewE():
+            navigate2()
+            
+            frame_table1.grid(padx=0.2, pady=0.1, row=1, column=0)
+            info_label = ctk.CTkLabel(master=frame_table1, corner_radius=0, text='Agregar', font=("Helvetica",  24, 'bold'))
+            info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)      
+            
+            def browse_file():
+                filename = filedialog.askopenfilename(initialdir = "/", title = "Seleccionar archivo", filetypes = (("Archivos", "*.*"), ("Todos los archivos", "*.*")))
+                # Mostrar nombre de archivo seleccionado en cuadro de texto
+                file_path.set(filename)
+
+            # Crear función para subir archivo
+            def upload_file():
+                src_file = file_path.get()
+                dest_folder = os.path.join(os.getcwd(), "uploads")
+                shutil.copy(src_file, dest_folder)
+                # Obtener nombre de archivo subido
+                filename = os.path.basename(src_file)
+                # Construir ruta completa del archivo subido
+                uploaded_file_path = os.path.join(dest_folder, filename)
+                # Guardar ruta completa del archivo subido en una variable de tkinter
+                uploaded_file_path_var.set(uploaded_file_path)
+                # Guardar nombre del archivo subido en una variable de tkinter
+                uploaded_file_name_var.set(filename)
+                # Mostrar mensaje de confirmación
+                tk.messagebox.showinfo("Subir archivo", "Archivo subido con éxito.")
+                b.delete(0, 'end')           
+                # print(src_file)
+                # paths = uploaded_file_path_var
+                if incidencias == []:
+                    incidencias.append(str(src_file))
+                    # print(str(src_file)+"")
+                    self.createInci(matricula,cont,incidencias)
+                else:
+                    a = []
+                    for x in incidencias[0]:
+                        a.append(x)                                   
+                        
+                    a.append(str(src_file)+"")                    
+                    print(src_file)
+                    self.updateInci(matricula,cont,a)                
+
+            # Crear etiquetas y cuadros de texto
+            a = tk.Label(frame_table1, text="Archivo:")
+            file_path = tk.StringVar()
+            b = tk.Entry(frame_table1, textvariable=file_path)
+            c = tk.Button(frame_table1, text="Seleccionar archivo", command=browse_file)
+            d = tk.Button(frame_table1, text="Subir archivo", command=upload_file)
+            # ads = tk.Label(frame_table1, text="Archivo subido en:")
+            uploaded_file_name_var = tk.StringVar()
+            uploaded_file_path_var = tk.StringVar() #path 
+            
+            # tk.Button(frame_table1, textvariable=uploaded_file_name_var, command=download_file).grid(row=2, column=1, sticky="W")
+            # m = tk.Entry(frame_table1, textvariable=uploaded_file_path_var)
+            a.place(relx=0.35, rely=0.42, anchor=tk.CENTER,width=130,height=60)
+            b.place(relx=0.54, rely=0.42, anchor=tk.CENTER,width=300,height=60)
+            c.place(relx=0.45, rely=0.60, anchor=tk.CENTER,width=130,height=60)
+            d.place(relx=0.60, rely=0.60, anchor=tk.CENTER,width=130,height=60)
+            # ads.place(relx=0.60, rely=0.62, anchor=tk.CENTER,width=130,height=60) 
+            # m.place(relx=0.70, rely=0.72, anchor=tk.CENTER,width=130,height=60)                                 
+            
+
+        def viewR():
+            navigate2()
+            incidencias = self.getIncidencias(matricula,cont)
+            frame_table2.grid(padx=0.2, pady=0.1, row=1, column=0)
+            info_label = ctk.CTkLabel(master=frame_table2, corner_radius=0, text='Revisar', font=("Helvetica",  24, 'bold'))
+            info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
+            nfo_label = ctk.CTkLabel(master=frame_table2, corner_radius=0, text='No existen incidencias', font=("Helvetica",  24, 'bold'))
+            
+            if incidencias != []:    
+                # nfo_label.place(relx=0, rely=0, anchor=tk.CENTER)                                 
+                x = 0.30
+                i = 0.10
+                for x in incidencias[0]:
+
+                    def descargar_archivo(ruta):
+                        # Obtener la ruta de destino del usuario
+                        destino = filedialog.asksaveasfilename(defaultextension='.pdf')
+                        if destino:
+                            # Copiar el archivo en la ruta de destino
+                            try:
+                                shutil.copyfile(ruta, destino)
+                                print(f"Archivo guardado en: {destino}")
+                            except Exception as e:
+                                print(f"Ha ocurrido un error al guardar el archivo: {e}")
+                        else:
+                            print("La selección de destino ha sido cancelada por el usuario.")
+
+                    
+                    boton = tk.Button(frame_table2, text=x.split('/')[-1], command=lambda ruta=x: descargar_archivo(ruta))
+                    boton.place(relx=i, rely=0.50, anchor=tk.CENTER)  
+                    i+=0.10
+
+                    # print(x)
+                # print(incidencias[0])
+                # for ruta in incidencias:     
+                #     print(ruta)               
+                #     boton = tk.Button(frame_table2, text= str(ruta).split('/')[-1])                                        
+                #     boton.place(relx=x, rely=0.50, anchor=tk.CENTER)  
+                #     x+= 0.10                                           
+
+            # else:                
+                # nfo_label.place(relx=0.50, rely=0.50, anchor=tk.CENTER) 
 
 
 
-        # cont = 0
-        # for x in self.datas:
-        #     if x == titulo:
-        #         cont += 1;
-        #         break;
-        #     else:
-        #         cont += 1;
-        
-        # print(cont)
-        # alumno = self.getByMatricula(matricula)
-        # print(alumno)
+        self.btnk1 = ctk.CTkButton(master=self.bottom_frame6, text="Revisar", width= 140, height= 35, command=viewR, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnk1.place(relx= 0.4, rely=0.1, anchor=tk.CENTER)
 
+        self.btnk2 = ctk.CTkButton(master=self.bottom_frame6, text="Agregar", width= 140, height= 35, command=viewE, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnk2.place(relx= 0.6, rely=0.1, anchor=tk.CENTER)
 
+                   
     def getByMatricula(self,matricula):
         conn = psycopg2.connect(
             user="postgres",
@@ -343,18 +455,85 @@ class Window(ctk.CTk):
             port="5432",   
             database="estancia"
         )
-        cursor = conn.cursor()
-        matricula = 183392
+        cursor = conn.cursor()        
         # Ejecuta una consulta SQL
         cursor.execute(f"SELECT * FROM alumnos WHERE matricula={matricula}" )
 
         # Obtén los resultados de la consulta
         results = cursor.fetchall()
         # print(results)
-        return results
+        
         cursor.close()
         conn.close()
 
+        return results
+    
+    def createInci(self,matricula,cuatri,datas):
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+            )
+        cursor = conn.cursor()        
+        sql = "INSERT INTO incidencias (matriculaalumno, uplo,cuatri) VALUES (%s, %s, %s)"
+
+        valores = (matricula, datas,cuatri)
+
+        cursor.execute(sql, valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+    
+    def updateInci(self,matricula,cuatri,datas):
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+            )
+        cursor = conn.cursor()        
+        
+        sql = "UPDATE incidencias SET uplo = %s WHERE matriculaalumno = %s and cuatri = %s;"
+
+        valores = (datas,matricula,cuatri)
+
+        cursor.execute(sql, valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+    def getIncidencias(self,matricula,cuatri):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()        
+        cursor.execute(f"SELECT uplo FROM incidencias WHERE matriculaalumno={matricula} and cuatri={cuatri}" )
+
+        a = []
+        results = cursor.fetchall()
+        if results != []:
+                # print(results[0][0])
+                a.append(results[0][0])
+                # for x in a :
+                #       print(x)
+        else:
+              print('sin insidencias')    
+    
+        cursor.close()
+        conn.close()
+        return a
+    
     def get_asignaturas(self, frame_leftB, button_area, frame_right, view):  
         if self.asignaturas:
             button_area.pack(side=tk.LEFT, fill="both", expand="yes", padx=0)
