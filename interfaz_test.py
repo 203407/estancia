@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import END, Scrollbar, ttk
 from tkinter import messagebox
 import customtkinter as ctk 
 from PIL import Image
@@ -30,7 +30,7 @@ class Window(ctk.CTk):
         #Datos
         self.asignaturas = []
         self.alumnos = []
-   
+        datas = []
         self.tabla_trayectoria= None
 
         #Paginas/vistas
@@ -40,6 +40,7 @@ class Window(ctk.CTk):
         self.bottom_frame3 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame4 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame5 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame6 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
 
         #Barra de navegación superior
         self.top_frame.grid(padx=0, pady=0, row=0, column=0)
@@ -62,6 +63,8 @@ class Window(ctk.CTk):
         nav_btn_4.place(relx=0.600, rely=0.625, anchor=tk.CENTER)
         nav_btn_5 = ctk.CTkButton(master=self.top_frame, text="Reprobados", width=40 , command=self.view5, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
         nav_btn_5.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
+        nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="incidencias", width=40 , command=self.view6, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
+        nav_btn_6.place(relx=0.757, rely=0.725, anchor=tk.CENTER)
 
 
         self.view1()
@@ -73,6 +76,7 @@ class Window(ctk.CTk):
         self.bottom_frame3.grid_remove()
         self.bottom_frame4.grid_remove()
         self.bottom_frame5.grid_remove()  
+        self.bottom_frame6.grid_remove()  
 
     def show_message(self, title, msj):
         messagebox.showinfo(message=msj, title=title)
@@ -95,6 +99,10 @@ class Window(ctk.CTk):
     def view2(self):
         #indice reprobados
         self.navigate()
+        self.alumnos = []
+        self.asignaturas = []
+        self.selectData()
+        self.selectDataA()
         self.bottom_frame2.grid(padx=0, pady=0, row=1, column=0)
         self.bottom_frame2.grid_propagate(False)
 
@@ -120,77 +128,86 @@ class Window(ctk.CTk):
         frame_right.grid(padx= 36, pady= 35, row=0, column = 1)
         frame_right.grid_propagate(False)
 
-        self.get_asignaturas(frame_leftB, button_area, frame_right, 2)
-
+        self.get_asignaturas(frame_leftB, button_area, frame_right, 2)              
+    
 
     def view3(self):
         #expediente
         self.navigate()
+        self.alumnos = []
+        self.asignaturas = []
+        self.selectData()
+        self.selectDataA()
         self.bottom_frame3.grid(padx=0, pady=0, row=1, column=0)
 
         info_label = ctk.CTkLabel(master=self.bottom_frame3, corner_radius=0, text="Expediente", font=("Helvetica",  24, 'bold'))
         info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
 
-        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1100, height= 385,corner_radius=0, fg_color="red")
+        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1100, height= 385,corner_radius=0)
         frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
-
-        table = ttk.Treeview(frame_table)
-
-        # agregar las columnas
-        table['columns'] = ('Name', 'Age', 'Gender')
-
-        # configurar las columnas
-        table.column('#0', width=0, stretch=tk.NO)
-        table.column('Name', anchor=tk.CENTER, width=100)
-        table.column('Age', anchor=tk.CENTER, width=100)
-        table.column('Gender', anchor=tk.CENTER, width=100)
-
-        # agregar encabezados de columna
-        table.heading('#0', text='', anchor=tk.CENTER)
-        table.heading('Name', text='Name', anchor=tk.CENTER)
-        table.heading('Age', text='Age', anchor=tk.CENTER)
-        table.heading('Gender', text='Gender', anchor=tk.CENTER)
-
-        # agregar filas
-        table.insert(parent='', index='end', iid=0, text='', values=('John', 30, 'Male'))
-        table.insert(parent='', index='end', iid=1, text='', values=('Lisa', 25, 'Female'))
-        table.insert(parent='', index='end', iid=2, text='', values=('Bob', 40, 'Male'))
-
         
+#///////////////////////////////////////////////////////////////////
 
-        def edit_cell(event):
-            # obtener el nombre de la columna editada
-            column_name = table.identify_column(event.x)
-
-            # imprimir la tupla de nombres de columnas
-            print(table['columns'])
-
-            # buscar el índice numérico correspondiente a la columna
-            column_index = table['columns'].index(column_name)
-
-            # obtener el identificador del elemento seleccionado
-            item_id = table.focus()
-
-            # obtener el diccionario de valores correspondiente al elemento seleccionado
-            item_values = table.item(item_id)['values']
-
-            # obtener el valor de la celda editada
-            value = item_values[column_index]
-
-            # actualizar la base de datos con el nuevo valor
-            # ...
-
-            # actualizar la vista con el nuevo valor
-            table.item(item_id, values=item_values)
+        num_pairs = 15  # número de pares de columnas "inc" y "repro"
+        cols = ["Matricula", "Nombre"]
+        self.datas = []
+        for i in range(num_pairs):
+            cols.append(f"Inc{i+1}")
+            self.datas.append(f"Inc{i+1}")
+            cols.append(f"Repro{i+1}")
+        # tree = ttk.Treeview(frame_table, columns=cols)
 
 
-    
+        style = ttk.Style()
+        style.configure("Treeview", treelinewidth=20,padding=5)
+        tree = ttk.Treeview(frame_table,height=3,columns=cols,style="Treeview") # definir cuantas columnas tendra la tabla
+        tree.place(x=10,y=20, width=1500,height=400) # le
 
-        table.bind('<Double-1>', edit_cell)
+
+        tree.heading("#0", text="ID",anchor="w")        
+        tree.heading("Matricula", text="Matricula",anchor="w")
+        tree.heading("Nombre", text="Nombre",anchor="w")
+
+        for i in range(num_pairs):
+            tree.heading(f"Inc{i+1}", text=f"Inc{i+1}",anchor="w")
+            tree.heading(f"Repro{i+1}", text=f"Repro{i+1}",anchor="w")
 
 
-        table.pack()
 
+        def on_cell_click(event):
+            # hacer algo cuando se hace clic en la celda
+            row_id = event.widget.focus()
+            col_id = event.widget.identify_column(event.x)
+            col_title = event.widget.heading(col_id)['text']
+            
+            
+            cell_value = event.widget.item(row_id)['values'][0]
+
+            # valor_celda = treeview.item(3, "values")[1] # "values" se refiere a las columnas de datos
+            
+            if col_title in self.datas:
+                messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")
+                print(f"Cell clicked: row={row_id}, col={col_id}, heading={col_title}")
+                #print(cell_value)
+                self.navigate()
+                self.view6(cell_value,col_title)
+
+        tree.bind('<ButtonRelease-1>', on_cell_click)
+
+
+        # para definir la scrollbar vertical
+        scroll_databaseV = Scrollbar(frame_table, orient="vertical", command=tree.yview)
+        scroll_databaseV.place(x=10, y=20, height=400)
+        tree.configure(yscrollcommand=scroll_databaseV.set)
+
+        #para definir la scrollbar hortizontal
+        scroll_databaseH = Scrollbar(frame_table, orient="horizontal", command=tree.xview)
+        scroll_databaseH.place(x=10, y=107, width=1300)
+        tree.configure(xscrollcommand=scroll_databaseH.set)
+
+        for x in self.alumnos:
+            tree.insert("", "end", text="1", values=[x[2], x[1]] + ["2", "1"]*num_pairs)
+                
 
         self.btnk = ctk.CTkButton(master=self.bottom_frame3, text="checkout", width= 140, height= 35, command=self.reco, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
         self.btnk.place(relx= 0.5, rely=0.4, anchor=tk.CENTER)
@@ -200,17 +217,19 @@ class Window(ctk.CTk):
         self.selectData()
         
 
-
     def editar_celda(event, tabla):
         columna = tabla.identify_column(event.x)
         fila = tabla.identify_row(event.y)
         if columna and fila:
             tabla.edit(fila, columna)
 
-
     def view4(self):
         #trayectoria
         self.navigate()
+        self.alumnos = []
+        self.asignaturas = []
+        self.selectData()
+        self.selectDataA()
         self.bottom_frame4.grid(padx=0, pady=0, row=1, column=0)
 
         info_label = ctk.CTkLabel(master=self.bottom_frame4, corner_radius=0, text="Trayectoria", font=("Helvetica",  24, 'bold'))
@@ -283,6 +302,58 @@ class Window(ctk.CTk):
         for x in self.asignaturas:
             print(x)
 
+    # def view6(self,matricula,titulo):
+
+    def view6(self):
+        self.bottom_frame6.grid(padx=0, pady=0, row=1, column=0)
+        
+
+        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1100, height= 385,corner_radius=0,fg_color="white")
+        frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
+        
+
+
+
+        # info_label = ctk.CTkLabel(master=self.bottom_frame6, corner_radius=0, text=matricula, font=("Helvetica",  24, 'bold'))
+        # info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
+        
+        # info_label = ctk.CTkLabel(master=self.bottom_frame6, corner_radius=0, text=titulo, font=("Helvetica",  24, 'bold'))
+        # info_label.place(relx=0.15, rely=0.20, anchor=tk.CENTER)
+
+
+
+        # cont = 0
+        # for x in self.datas:
+        #     if x == titulo:
+        #         cont += 1;
+        #         break;
+        #     else:
+        #         cont += 1;
+        
+        # print(cont)
+        # alumno = self.getByMatricula(matricula)
+        # print(alumno)
+
+
+    def getByMatricula(self,matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+        matricula = 183392
+        # Ejecuta una consulta SQL
+        cursor.execute(f"SELECT * FROM alumnos WHERE matricula={matricula}" )
+
+        # Obtén los resultados de la consulta
+        results = cursor.fetchall()
+        # print(results)
+        return results
+        cursor.close()
+        conn.close()
 
     def get_asignaturas(self, frame_leftB, button_area, frame_right, view):  
         if self.asignaturas:
@@ -369,7 +440,6 @@ class Window(ctk.CTk):
         self.tablaR.configure(height=24)
         self.tablaR.pack(fill="both", expand=True, side=tk.TOP, pady=15, padx=5, anchor=tk.CENTER)
 
-
     def test_tabla1(self, frame_table):
         tree = ttk.Treeview(frame_table)
         tree["columns"]=("nombre", "edad")
@@ -449,9 +519,6 @@ class Window(ctk.CTk):
 
         cursor.close()
         conn.close()
-
-
-
 
     def conectar(self):
 

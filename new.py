@@ -28,6 +28,14 @@ def upload_file():
     # Mostrar mensaje de confirmación
     tk.messagebox.showinfo("Subir archivo", "Archivo subido con éxito.")
 
+# Crear función para descargar archivo
+def download_file():
+    filename = uploaded_file_path_var.get()
+    root.filename = filedialog.asksaveasfilename(initialdir = "/", title = "Guardar archivo como", initialfile = filename, defaultextension = os.path.splitext(filename)[1])
+    if root.filename:
+        shutil.copy(filename, root.filename)
+        tk.messagebox.showinfo("Descargar archivo", "Archivo descargado con éxito.")
+
 # Crear etiquetas y cuadros de texto
 tk.Label(root, text="Archivo:").grid(row=0, column=0)
 file_path = tk.StringVar()
@@ -37,7 +45,7 @@ tk.Button(root, text="Subir archivo", command=upload_file).grid(row=1, column=1)
 tk.Label(root, text="Archivo subido en:").grid(row=2, column=0)
 uploaded_file_name_var = tk.StringVar()
 uploaded_file_path_var = tk.StringVar()
-tk.Entry(root, textvariable=uploaded_file_name_var).grid(row=2, column=1, sticky="W")
+tk.Button(root, textvariable=uploaded_file_name_var, command=download_file).grid(row=2, column=1, sticky="W")
 tk.Entry(root, textvariable=uploaded_file_path_var).grid(row=3, column=1, sticky="W")
 
 # Iniciar bucle principal

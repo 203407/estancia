@@ -35,7 +35,7 @@ def get_reprobados(pdf_reader, asignatura, periodo):
                             
                             
                             insertarData(a.id,a.nombre,a.m,asignatura,periodo)
-
+                            createInci(a.m)
 
                             #win.alumnos.append(a)
                             break
@@ -134,7 +134,26 @@ def get_data():
     pdf_file.close()
 
 
+def createInci(idAlumno):
+    conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+    cursor = conn.cursor()
+    data = [[''],[''],[''],[''],[''],[''],[''],[''],[''],[''],[''],[''],[''],[''],['']]
+    sql = "INSERT INTO incidencias (matriculaalumno, uplo) VALUES (%s, %s)"
 
+    valores = (idAlumno, data)
+
+    cursor.execute(sql, valores)
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
              
 def insertarDataA(asignatura):
     conn = psycopg2.connect(
