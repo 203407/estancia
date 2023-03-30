@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import END, Scrollbar, ttk
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import simpledialog
 import customtkinter as ctk 
 from PIL import Image
 from tkintertable import TableCanvas
@@ -11,7 +12,7 @@ import psycopg2
 import json
 import urllib.request
 from urllib.request import urlretrieve
-
+import re
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -37,7 +38,10 @@ class Window(ctk.CTk):
         self.alumnos = []
         datas = []
         self.tabla_trayectoria= None
-
+        self.trayectoria = []
+        
+        hanbi = False
+        
         #Paginas/vistas
         self.top_frame = ctk.CTkFrame(master=self, width=1400, height=180, corner_radius=0, fg_color="#E5E5E5") 
         self.bottom_frame = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
@@ -46,6 +50,8 @@ class Window(ctk.CTk):
         self.bottom_frame4 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame5 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame6 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame7 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame8 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
 
         #Barra de navegación superior
         self.top_frame.grid(padx=0, pady=0, row=0, column=0)
@@ -58,22 +64,42 @@ class Window(ctk.CTk):
         title_label.place(relx=0.540, rely=0.375, anchor=tk.CENTER)
 
         #Botones de navegación de páginas
-        nav_btn_1 = ctk.CTkButton(master=self.top_frame, text="Inicio", width=35 , command = self.view1, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_1.place(relx=0.415, rely=0.625, anchor=tk.CENTER)
-        nav_btn_2 = ctk.CTkButton(master=self.top_frame, text="Índice reprobados", width=65 , command=self.view2, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_2.place(relx=0.474, rely=0.625, anchor=tk.CENTER)
-        nav_btn_3 = ctk.CTkButton(master=self.top_frame, text="Expediente", width=40 , command=self.view3, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_3.place(relx=0.543, rely=0.625, anchor=tk.CENTER)
-        nav_btn_4 = ctk.CTkButton(master=self.top_frame, text="Trayectoria", width=40 , command=self.view4, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_4.place(relx=0.600, rely=0.625, anchor=tk.CENTER)
-        nav_btn_5 = ctk.CTkButton(master=self.top_frame, text="Reprobados", width=40 , command=self.view5, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_5.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
-        nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="incidencias", width=40 , corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5")
-        nav_btn_6.place(relx=0.757, rely=0.725, anchor=tk.CENTER)
+        self.nav_btn_1 = ctk.CTkButton(master=self.top_frame, text="Inicio", width=35 , command = self.view1, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_1.place(relx=0.415, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_2 = ctk.CTkButton(master=self.top_frame, text="Índice reprobados", width=65 , command=self.view2, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_2.place(relx=0.474, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_3 = ctk.CTkButton(master=self.top_frame, text="Expediente", width=40 , command=self.view3, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_3.place(relx=0.543, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_4 = ctk.CTkButton(master=self.top_frame, text="Trayectoria", width=40 , command=self.view4, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_4.place(relx=0.600, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_5 = ctk.CTkButton(master=self.top_frame, text="Reprobados", width=40 , command=self.view5, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_5.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="Cerrar", width=40 ,command=self.logout, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_6.place(relx=0.710, rely=0.625, anchor=tk.CENTER)        
 
+        # self.view1()
+        self.viewL()
+        
+    def chanteStatus(self):
+        self.nav_btn_1.configure(state="normal")
+        self.nav_btn_2.configure(state="normal")
+        self.nav_btn_3.configure(state="normal")
+        self.nav_btn_4.configure(state="normal")
+        self.nav_btn_5.configure(state="normal")
+        self.nav_btn_6.configure(state="normal")        
 
-        self.view1()
+    def changedagain(self):
+        self.nav_btn_1.configure(state="disabled")
+        self.nav_btn_2.configure(state="disabled")
+        self.nav_btn_3.configure(state="disabled")
+        self.nav_btn_4.configure(state="disabled")
+        self.nav_btn_5.configure(state="disabled")
+        self.nav_btn_6.configure(state="disabled")        
 
+    def logout(self):
+        self.navigate()
+        self.changedagain()
+        self.viewL()
 
     def navigate(self):
         self.bottom_frame.grid_remove()
@@ -82,12 +108,129 @@ class Window(ctk.CTk):
         self.bottom_frame4.grid_remove()
         self.bottom_frame5.grid_remove()  
         self.bottom_frame6.grid_remove()  
+        self.bottom_frame7.grid_remove()  
+        self.bottom_frame8.grid_remove() 
 
     def show_message(self, title, msj):
         messagebox.showinfo(message=msj, title=title)
-
     
+    def viewL(self):
+        self.navigate()
+        self.bottom_frame7.grid(padx=0, pady=0, row=1, column=0)
+        
+        user_l = ctk.CTkLabel(master=self.bottom_frame7, corner_radius=0, text='Usuario:', font=("Helvetica",  24, 'bold'))
+        user_l.place(relx=0.35, rely=0.22, anchor=tk.CENTER)      
 
+        users = tk.Entry(self.bottom_frame7, bg="white", font=("Arial", 12))
+        users.place(relx=0.55, rely=0.22, anchor=tk.CENTER,width=300,height=60)
+
+
+        pass_l = ctk.CTkLabel(master=self.bottom_frame7, corner_radius=0, text='Contraseña:', font=("Helvetica",  24, 'bold'))
+        pass_l.place(relx=0.35, rely=0.30, anchor=tk.CENTER)  
+
+        passwf = tk.Entry(self.bottom_frame7, bg="white", font=("Arial", 12))
+        passwf.place(relx=0.55, rely=0.33, anchor=tk.CENTER,width=300,height=60)
+
+        def checkLogin():
+            usuario = users.get()
+            contrasena = passwf.get()
+
+            usuarios = self.getUsuers()
+
+            conte = 0
+            for x in usuarios:                
+                if usuario == x[2] and contrasena == x[3]:
+                    print(x[2],"  ",x[3])
+                    self.show_message("Mensaje", "Bienvenido")                    
+                    self.navigate()
+                    self.chanteStatus()
+                    self.view1()
+
+                else:                    
+                    conte += 1
+
+            print(len(usuarios))
+            print(conte)
+            if conte == len(usuarios):
+                self.show_message("Mensaje", "Verifique las credenciales por favor")                    
+
+
+        self.btnLo = ctk.CTkButton(master=self.bottom_frame7, text="Log in", width= 170, height= 50, command=checkLogin, corner_radius=3, fg_color="#404CBB", text_color="white", hover_color="#4554DD", font=("Helvetica",  17, 'bold'))
+        self.btnLo.place(relx= 0.5, rely=0.52, anchor=tk.CENTER)
+        
+        def changeview():
+            self.navigate()
+            self.viewRe()
+
+
+        self.btnkm = ctk.CTkButton(master=self.bottom_frame7, text="Registrarse", width= 140, height= 35, command=changeview, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnkm.place(relx= 0.58, rely=0.43, anchor=tk.CENTER)
+
+    def viewRe(self):
+        
+        self.navigate()
+        self.bottom_frame8.grid(padx=0, pady=0, row=1, column=0)
+
+        roles = ['Tutor','Secretari','Jefe de carrera','Encargado CACEI']
+
+        
+        name_label = ctk.CTkLabel(master=self.bottom_frame8, corner_radius=0, text='Nombre completo:', font=("Helvetica",  24, 'bold'))
+        name_label.place(relx=0.35, rely=0.12, anchor=tk.CENTER)      
+        
+        name = tk.Entry(self.bottom_frame8, bg="white", font=("Arial", 12))
+        name.place(relx=0.55, rely=0.12, anchor=tk.CENTER,width=300,height=60)
+        
+        user_label = ctk.CTkLabel(master=self.bottom_frame8, corner_radius=0, text='Usuario:', font=("Helvetica",  24, 'bold'))
+        user_label.place(relx=0.35, rely=0.22, anchor=tk.CENTER)      
+
+        user = tk.Entry(self.bottom_frame8, bg="white", font=("Arial", 12))
+        user.place(relx=0.55, rely=0.22, anchor=tk.CENTER,width=300,height=60)
+
+
+        pass_label = ctk.CTkLabel(master=self.bottom_frame8, corner_radius=0, text='Contraseña:', font=("Helvetica",  24, 'bold'))
+        pass_label.place(relx=0.35, rely=0.30, anchor=tk.CENTER)      
+
+        passw = tk.Entry(self.bottom_frame8, bg="white", font=("Arial", 12))
+        passw.place(relx=0.55, rely=0.33, anchor=tk.CENTER,width=300,height=60)
+
+        
+        rol_label = ctk.CTkLabel(master=self.bottom_frame8, corner_radius=0, text='Rol de usuario:', font=("Helvetica",  24, 'bold'))
+        rol_label.place(relx=0.35, rely=0.40, anchor=tk.CENTER)      
+
+        opcion_seleccionada = tk.StringVar()
+        lista_desplegable = tk.OptionMenu(self.bottom_frame8, opcion_seleccionada, * roles)    
+        lista_desplegable.place(relx=0.55, rely=0.40, anchor=tk.CENTER)
+        
+        
+        def register():
+            userd = user.get()
+            nombre = name.get()
+            pasw = passw.get()            
+
+            print(nombre)
+            print(userd)
+            print(pasw)
+            print(opcion_seleccionada.get())
+
+            self.intertUser(nombre,opcion_seleccionada.get(),userd,pasw)
+            
+            self.show_message("Mensaje", "Se agrego correctamente el usuario")
+            
+            name.delete(0, 'end')
+            user.delete(0, 'end')
+            passw.delete(0, 'end')
+            opcion_seleccionada.set("")
+            
+            def changes():
+                self.navigate()
+                self.viewL()
+
+
+            changes()
+
+        self.btnR = ctk.CTkButton(master=self.bottom_frame8, text="Guardar", width= 170, height= 50, command=register, corner_radius=3, fg_color="#404CBB", text_color="white", hover_color="#4554DD", font=("Helvetica",  17, 'bold'))
+        self.btnR.place(relx= 0.5, rely=0.52, anchor=tk.CENTER)
+           
     def view1(self):
         #inicio
         self.navigate()
@@ -99,7 +242,6 @@ class Window(ctk.CTk):
         self.btn1.place(relx= 0.5, rely=0.4, anchor=tk.CENTER)
         self.btn2 = ctk.CTkButton(master=self.bottom_frame, text="Guardar", width= 170, height= 50, command=self.get_data, corner_radius=3, fg_color="#404CBB", text_color="white", hover_color="#4554DD", font=("Helvetica",  17, 'bold'))
         self.btn2.place(relx= 0.5, rely=0.525, anchor=tk.CENTER)
-
 
     def view2(self):
         #indice reprobados
@@ -135,7 +277,6 @@ class Window(ctk.CTk):
 
         self.get_asignaturas(frame_leftB, button_area, frame_right, 2)              
     
-
     def view3(self):
         #expediente
         self.navigate()
@@ -219,6 +360,11 @@ class Window(ctk.CTk):
             k+=1
                 
 
+        style = ttk.Style()
+        style.configure("Custom.Treeview", borderwidth=10)
+
+        # aplicar estilo personalizado al Treeview
+        tree.configure(style="Custom.Treeview")
 
     def reco(self):
         #print(self.asignaturas)
@@ -237,6 +383,10 @@ class Window(ctk.CTk):
         self.asignaturas = []
         self.selectData()
         self.selectDataA()
+
+        self.trayectoria = []
+        self.selectDataTra()
+        
         self.bottom_frame4.grid(padx=0, pady=0, row=1, column=0)
 
         info_label = ctk.CTkLabel(master=self.bottom_frame4, corner_radius=0, text="Trayectoria", font=("Helvetica",  24, 'bold'))
@@ -245,25 +395,140 @@ class Window(ctk.CTk):
         frame_table = ctk.CTkFrame(master=self.bottom_frame4, width= 1100, height= 405,corner_radius=0)
         frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
 
-        table = ttk.Treeview(frame_table)
+        cols = ["Matricula", "Nombre",'gradoestar',"materiasqllevar","materiasaprobadas","materiasrepeticion","nommateriasrepe","cuatrimfalta","materiaqfalta","materiarezagada","nombremateriareza","nommatedeberia","nombrellevaactual"]
 
-        # Definir las columnas de la tabla
-        table['columns'] = ('name', 'age', 'gender')
+    
+        tree = ttk.Treeview(frame_table,height=3,columns=cols) # definir cuantas columnas tendra la tabla
+        tree.place(x=10,y=20, width=1500,height=400) # le
 
-        # Definir las cabeceras de las columnas
-        table.heading('#0', text='ID')
-        table.heading('name', text='Name')
-        table.heading('age', text='Age')
-        table.heading('gender', text='Gender')
 
-        # Agregar los datos a la tabla
-        table.insert(parent='', index='end', iid=0, text='1', values=('John', 30, 'Male'))
-        table.insert(parent='', index='end', iid=1, text='2', values=('Jane', 25, 'Female'))
+        tree.heading("#0", text="ID",anchor="w")        
+        tree.heading("Matricula", text="Matricula",anchor="w")
+        tree.heading("Nombre", text="Nombre",anchor="w")
 
-        # Ubicar la tabla en la ventana
-        table.pack()
-        #self.test_tabla1(frame_table)
 
+
+        
+        tree.heading("gradoestar", text="gradoestar",anchor="w")
+        tree.heading("materiasqllevar", text="materiasqllevar",anchor="w")
+        tree.heading("materiasaprobadas", text="materiasaprobadas",anchor="w")
+
+        tree.heading("materiasrepeticion", text="materiasrepeticion",anchor="w")
+        tree.heading("nommateriasrepe", text="nommateriasrepe",anchor="w")
+        tree.heading("cuatrimfalta", text="cuatrimfalta",anchor="w")
+        # tree.heading("MateriaRz", text="MateriaRz",anchor="w")
+        tree.heading("materiaqfalta", text="materiaqfalta",anchor="w")
+        tree.heading("materiarezagada", text="materiarezagada",anchor="w")
+        tree.heading("nombremateriareza", text="nombremateriareza",anchor="w")
+        tree.heading("nommatedeberia", text="nommatedeberia",anchor="w")
+        tree.heading("nombrellevaactual", text="nombrellevaactual",anchor="w")
+
+
+        # tree.heading("gradoestar", text="GradoA",anchor="w")
+        # tree.heading("materiasqllevar", text="MateriasLLevar",anchor="w")
+        # tree.heading("materiasaprobadas", text="MateriasAprobadas",anchor="w")
+
+        # tree.heading("materiasrepeticion", text="MateriasRepeticion",anchor="w")
+        # tree.heading("nommateriasrepe", text="NombreMateriasRepe",anchor="w")
+        # tree.heading("cuatrimfalta", text="CuatriFaltante",anchor="w")
+        # # tree.heading("MateriaRz", text="MateriaRz",anchor="w")
+        # tree.heading("materiaqfalta", text="MateriasFaltanes",anchor="w")
+        # tree.heading("materiarezagada", text="MateriaRezagada",anchor="w")
+        # tree.heading("nombremateriareza", text="NombreMateriaRezagada",anchor="w")
+        # tree.heading("nommatedeberia", text="MateriasDeberia",anchor="w")
+        # tree.heading("nombrellevaactual", text="MateriasLleva",anchor="w")
+
+        # tree.heading("MateriasCuatri", text="MateriasCuatri",anchor="w")
+                               
+        # para definir la scrollbar vertical
+        scroll_databaseV = Scrollbar(frame_table, orient="vertical", command=tree.yview)
+        scroll_databaseV.place(x=10, y=20, height=400)
+        tree.configure(yscrollcommand=scroll_databaseV.set)
+
+        #para definir la scrollbar hortizontal
+        scroll_databaseH = Scrollbar(frame_table, orient="horizontal", command=tree.xview)
+        scroll_databaseH.place(x=10, y=350, width=1300)
+        tree.configure(xscrollcommand=scroll_databaseH.set)
+
+       
+        def on_cell_click(event):
+            # hacer algo cuando se hace clic en la celda
+            
+            
+            row_id = event.widget.focus()
+            col_id = event.widget.identify_column(event.x)
+            col_title = event.widget.heading(col_id)['text']
+            matricula = event.widget.item(row_id)['values'][0]
+
+            # print(column_id)
+            cell_value = event.widget.item(row_id)['values'][int(col_id[1:])-1]
+                     
+            # print(matricula)
+            # messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")                        
+            # print(cell_value)              
+            a = ""
+            # print(col_title)
+            newca = ""
+            if isinstance(cell_value, int) == False:
+                # for x in cell_value: 
+                #     if x == ',':
+                #         print(a)
+                #         newca =+ " " + str(a) + " "
+                #         a = ""                   
+                #     if x != "'" and x != "[" and x != "]"and x != " ":
+                #         print(a)
+                #         a += x               
+                palabras = re.findall(r"'(\w+)'", cell_value)
+                
+
+                # print(palabras)
+                if col_title != 'Nombre' and col_title != 'Matricula':
+                    new_value = simpledialog.askstring("Editar celda", f"Ingrese un nuevo valor para la celda:", initialvalue=palabras)                           
+                    
+                    if col_title != "nombremateriareza":
+                        a = new_value.split(" ")         
+                        print(a)        
+                      
+                        print(matricula)
+                        print(col_title)
+
+                        self.updateTrayectoria(col_title,a,matricula)
+                    else:
+                        self.updateTrayectoria(col_title,new_value,matricula)
+
+                    self.navigate()
+                    self.view4()
+                else:
+                    self.show_message("Mensaje", "Celda no editable") 
+            else:
+
+                if col_title != 'Nombre' and col_title != 'Matricula':
+                    new_value = simpledialog.askstring("Editar celda", f"Ingrese un nuevo valor para la celda:", initialvalue=cell_value)
+                    
+                    print(new_value)
+                    print(matricula)
+                    print(col_title)
+
+                    self.updateTrayectoria(col_title,int (new_value),matricula)
+                    self.navigate()
+                    self.view4()
+                else:
+                    self.show_message("Mensaje", "Celda no editable") 
+                
+
+        tree.bind('<ButtonRelease-1>', on_cell_click)
+                             
+
+        l = 1
+        for x in self.alumnos:
+                    
+            for d in self.trayectoria:
+                if d[-1] == x[2]:                                        
+                    tree.insert("", "end", text=l, values=[x[2], x[1], d[0], d[1], d[2], d[3], str(d[4]), d[5], d[6], d[7], d[8], d[9], d[10]])                    
+            l+=1
+        
+        tree.bind('<ButtonRelease-1>', on_cell_click)        
+            
     def view5(self):
         #reprobados
         self.alumnos = []
@@ -305,8 +570,6 @@ class Window(ctk.CTk):
         
         for x in self.asignaturas:
             print(x)
-
-    # def view6(self,matricula,titulo):
 
     def view6(self,matricula,titulo):
         self.bottom_frame6.grid(padx=0, pady=0, row=1, column=0)
@@ -359,12 +622,9 @@ class Window(ctk.CTk):
                 uploaded_file_name_var.set(filename)
                 # Mostrar mensaje de confirmación
                 tk.messagebox.showinfo("Subir archivo", "Archivo subido con éxito.")
-                b.delete(0, 'end')           
-                # print(src_file)
-                # paths = uploaded_file_path_var
+                b.delete(0, 'end')                           
                 if incidencias == []:
                     incidencias.append(str(src_file))
-                    # print(str(src_file)+"")
                     self.createInci(matricula,cont,incidencias)
                 else:
                     a = []
@@ -380,20 +640,14 @@ class Window(ctk.CTk):
             file_path = tk.StringVar()
             b = tk.Entry(frame_table1, textvariable=file_path)
             c = tk.Button(frame_table1, text="Seleccionar archivo", command=browse_file)
-            d = tk.Button(frame_table1, text="Subir archivo", command=upload_file)
-            # ads = tk.Label(frame_table1, text="Archivo subido en:")
+            d = tk.Button(frame_table1, text="Subir archivo", command=upload_file)            
             uploaded_file_name_var = tk.StringVar()
             uploaded_file_path_var = tk.StringVar() #path 
-            
-            # tk.Button(frame_table1, textvariable=uploaded_file_name_var, command=download_file).grid(row=2, column=1, sticky="W")
-            # m = tk.Entry(frame_table1, textvariable=uploaded_file_path_var)
+                        
             a.place(relx=0.35, rely=0.42, anchor=tk.CENTER,width=130,height=60)
             b.place(relx=0.54, rely=0.42, anchor=tk.CENTER,width=300,height=60)
             c.place(relx=0.45, rely=0.60, anchor=tk.CENTER,width=130,height=60)
-            d.place(relx=0.60, rely=0.60, anchor=tk.CENTER,width=130,height=60)
-            # ads.place(relx=0.60, rely=0.62, anchor=tk.CENTER,width=130,height=60) 
-            # m.place(relx=0.70, rely=0.72, anchor=tk.CENTER,width=130,height=60)                                 
-            
+            d.place(relx=0.60, rely=0.60, anchor=tk.CENTER,width=130,height=60)                                                        
 
         def viewR():
             navigate2()
@@ -403,8 +657,7 @@ class Window(ctk.CTk):
             info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
             nfo_label = ctk.CTkLabel(master=frame_table2, corner_radius=0, text='No existen incidencias', font=("Helvetica",  24, 'bold'))
             
-            if incidencias != []:    
-                # nfo_label.place(relx=0, rely=0, anchor=tk.CENTER)                                 
+            if incidencias != []:                                              
                 x = 0.30
                 i = 0.10
                 for x in incidencias[0]:
@@ -427,25 +680,12 @@ class Window(ctk.CTk):
                     boton.place(relx=i, rely=0.50, anchor=tk.CENTER)  
                     i+=0.10
 
-                    # print(x)
-                # print(incidencias[0])
-                # for ruta in incidencias:     
-                #     print(ruta)               
-                #     boton = tk.Button(frame_table2, text= str(ruta).split('/')[-1])                                        
-                #     boton.place(relx=x, rely=0.50, anchor=tk.CENTER)  
-                #     x+= 0.10                                           
-
-            # else:                
-                # nfo_label.place(relx=0.50, rely=0.50, anchor=tk.CENTER) 
-
-
 
         self.btnk1 = ctk.CTkButton(master=self.bottom_frame6, text="Revisar", width= 140, height= 35, command=viewR, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
         self.btnk1.place(relx= 0.4, rely=0.1, anchor=tk.CENTER)
 
         self.btnk2 = ctk.CTkButton(master=self.bottom_frame6, text="Agregar", width= 140, height= 35, command=viewE, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
         self.btnk2.place(relx= 0.6, rely=0.1, anchor=tk.CENTER)
-
                    
     def getByMatricula(self,matricula):
         conn = psycopg2.connect(
@@ -556,7 +796,6 @@ class Window(ctk.CTk):
             label_data2 = ctk.CTkLabel(master=frame_right, corner_radius=0, text="No se han guardado datos", font=("Helvetica",  18), bg_color="transparent")
             label_data2.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
-
     def get_grafica(self, asignatura, frame_right):
         print(asignatura)
         periodos = []
@@ -573,7 +812,6 @@ class Window(ctk.CTk):
                     reprobados.append(r)
 
         self.graficar(periodos, reprobados, frame_right, asignatura)
-        
 
     def graficar(self, periodos, reprobados, frame_right, asignatura):
         global canvas
@@ -681,8 +919,6 @@ class Window(ctk.CTk):
         #     print(str(x))
             #self.asignaturas.append(x)
 
-
-
         nombres_columnas = [desc[0] for desc in cursor.description]
 
 
@@ -721,8 +957,83 @@ class Window(ctk.CTk):
         cursor.close()
         conn.close()
 
+    def getUsuers(self):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
 
+        cursor.execute("SELECT * FROM users")
+        
+        results = cursor.fetchall()
+        # print(results)
+            
+        cursor.close()
+        conn.close()
 
+        return results
+    
+    def intertUser(self,nombre,tipo,usuario,passw):
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+            )
+        cursor = conn.cursor()        
+        sql = "INSERT INTO users (nombre, tipo,usuario,passw) VALUES (%s, %s, %s, %s)"
+                
+        valores = (nombre,tipo,usuario,passw)
 
+        cursor.execute(sql, valores)
 
+        conn.commit()
 
+        cursor.close()
+        conn.close()
+
+    def selectDataTra(self):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM trayectoria")
+        
+        results = cursor.fetchall()
+
+        for x in results:                
+            self.trayectoria.append(x)            
+            
+        cursor.close()
+        conn.close()
+
+        return results
+           
+    def updateTrayectoria(self,campo,dato,matricula):
+                conn = psycopg2.connect(
+                        user="postgres",
+                        password="carrera10",
+                        host="localhost",
+                        port="5432",   
+                        database="estancia"
+                    )
+                cursor = conn.cursor()                        
+                                 
+                valores = (dato,matricula)                                
+                sql = "UPDATE trayectoria SET {} = %s WHERE matriculaalumno = %s".format(campo)
+                cursor.execute(sql, valores)
+
+                conn.commit()
+
+                cursor.close()
+                conn.close()

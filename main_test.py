@@ -31,10 +31,9 @@ def get_reprobados(pdf_reader, asignatura, periodo):
                         if int(c) < 70:
                             id_unico = uuid.uuid4()
                             x = ''+  str(id_unico) 
-                            a = Alumno(x,part1, asignatura, periodo, calificaciones)
-                            
-                            
+                            a = Alumno(x,part1, asignatura, periodo, calificaciones)                                                        
                             insertarData(a.id,a.nombre,a.m,asignatura,periodo)                            
+                            createTrayecotira(a.m)
 
                             #win.alumnos.append(a)
                             break
@@ -150,7 +149,32 @@ def insertarDataA(asignatura):
 
     cursor.close()
     conn.close()
-   
+
+def createTrayecotira(matricula):
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+            )
+        cursor = conn.cursor()      
+
+        a = ['']
+        b = ['']
+        c = ['']
+        d = ['']        
+
+        sql = "INSERT INTO trayectoria (gradoestar,materiasqllevar,materiasaprobadas,materiasrepeticion,nommateriasrepe,cuatrimfalta,materiaqfalta,materiarezagada,nombremateriareza,nommatedeberia,nombrellevaactual,matriculaalumno) VALUES (0,0,0,0,%s,0,%s,0,'',%s,%s,%s)"           
+        
+        valores = (a,b,c,d,matricula)
+
+        cursor.execute(sql,valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
 
 def select_file():
     global FILEPATH
