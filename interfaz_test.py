@@ -314,11 +314,11 @@ class Window(ctk.CTk):
 
         for a in self.alumnos:
             if a[3] == asignatura:
-                if a[5] not in periodos:
-                    periodos.append(a.calificaciones[2])
+                if a[4] not in periodos:
+                    periodos.append(a[4])
                     r = 0
                     for b in self.alumnos:
-                        if a[5] == b[5] and b[3] == asignatura:
+                        if a[4] == b[4] and b[3] == asignatura:
                             r += 1
                     reprobados.append(r)
 
