@@ -34,15 +34,15 @@ def get_reprobados(pdf_reader, asignatura, periodo):
                             a = Alumno(x,part1, asignatura, periodo, calificaciones)
                             
                             
-                            insertarData(a.id,a.nombre,a.m,asignatura)
+                            insertarData(a.id,a.nombre,a.m,asignatura,periodo)
 
 
-                            win.alumnos.append(a)
+                            #win.alumnos.append(a)
                             break
 
             cont += 1
                 
-def insertarData(id,nombre,matricula,materiaR):
+def insertarData(id,nombre,matricula,materiaR,periodo):
     conn = psycopg2.connect(
             user="postgres",
             password="carrera10",
@@ -52,13 +52,8 @@ def insertarData(id,nombre,matricula,materiaR):
         )
     cursor = conn.cursor()
 
-        # Ejecuta una consulta SQL
-    #cursor.execute("SELECT * FROM alumnos")
-    sql = f"INSERT INTO alumnos (id, nombre, matricula,materiar) VALUES ('{id}','{nombre}',{matricula},'{materiaR}')"
+    sql = f"INSERT INTO alumnos (id, nombre, matricula,materiar,periodo) VALUES ('{id}','{nombre}',{matricula},'{materiaR}','{periodo}')"
 
-        # Obtén los resultados de la consulta
-    #results = cursor.fetchall()
-    #print(results)
     cursor.execute(sql);
 
     conn.commit()
@@ -127,15 +122,39 @@ def get_data():
     if "ACTA DE CALIFICACIONES" in lines[1]:
         asignatura = get_asignatura(pdf_reader)
         periodo, profesor = get_periodo(pdf_reader)
-        print(asignatura +" "+ periodo +" "+ profesor)
+        # print(asignatura +" "+ periodo +" "+ profesor)
         get_reprobados(pdf_reader, asignatura, periodo)
 
         if asignatura not in win.asignaturas and asignatura != None:
-            win.asignaturas.append(asignatura)
+            #win.asignaturas.append(asignatura)
+            print(asignatura)
+            insertarDataA(asignatura)
             print(win.asignaturas)
 
     pdf_file.close()
 
+
+
+             
+def insertarDataA(asignatura):
+    conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+    cursor = conn.cursor()
+
+    sql = f"INSERT INTO materias (materiass) VALUES ('{asignatura}')"
+
+    cursor.execute(sql);
+
+    conn.commit()
+
+    cursor.close()
+    conn.close()
+   
 
 def select_file():
     global FILEPATH

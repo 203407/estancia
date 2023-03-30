@@ -5,7 +5,7 @@ import customtkinter as ctk
 from PIL import Image
 from tkintertable import TableCanvas
 import psycopg2
-
+import json
 
 
 import matplotlib.pyplot as plt
@@ -197,8 +197,7 @@ class Window(ctk.CTk):
 
     def reco(self):
         #print(self.asignaturas)
-        for x in self.alumnos:
-            print(x.tostring())
+        self.selectData()
         
 
 
@@ -242,7 +241,14 @@ class Window(ctk.CTk):
 
     def view5(self):
         #reprobados
+        self.alumnos = []
+        self.asignaturas = []
+        self.selectData()
+        self.selectDataA()
         self.navigate()
+
+        
+
         self.bottom_frame5.grid(padx=0, pady=0, row=1, column=0)
 
         frame_left = ctk.CTkFrame(master=self.bottom_frame5, width= 350, height= 500,corner_radius=0, fg_color="transparent")
@@ -267,8 +273,16 @@ class Window(ctk.CTk):
         frame_right = ctk.CTkFrame(master=self.bottom_frame5, width= 900, height= 500,corner_radius=0, fg_color="transparent")
         frame_right.grid(padx= 36, pady= 35, row=0, column = 1)
         #frame_right.grid_propagate()
+        self.btnvk = ctk.CTkButton(master=self.bottom_frame5, text="checkout", width= 140, height= 35, command=self.veri, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnvk.place(relx= 0.5, rely=0.4, anchor=tk.CENTER)
 
         self.get_asignaturas(frame_leftB, button_area, frame_right, 5)
+
+    def veri(self):
+        
+        for x in self.asignaturas:
+            print(x)
+
 
     def get_asignaturas(self, frame_leftB, button_area, frame_right, view):  
         if self.asignaturas:
@@ -299,12 +313,12 @@ class Window(ctk.CTk):
         reprobados = []
 
         for a in self.alumnos:
-            if a.calificaciones[1] == asignatura:
-                if a.calificaciones[2] not in periodos:
+            if a[3] == asignatura:
+                if a[5] not in periodos:
                     periodos.append(a.calificaciones[2])
                     r = 0
                     for b in self.alumnos:
-                        if a.calificaciones[2] == b.calificaciones[2] and b.calificaciones[1] == asignatura:
+                        if a[5] == b[5] and b[3] == asignatura:
                             r += 1
                     reprobados.append(r)
 
@@ -348,8 +362,8 @@ class Window(ctk.CTk):
         self.tablaR.heading("col2", text="Periodo Reprobado", anchor="center")
         
         for a in self.alumnos:
-            if a.calificaciones[1] == asignatura:
-                self.tablaR.insert("", tk.END, text=f"{a.matricula}", values=(a.nombre, a.calificaciones[2]))
+            if str (a[3]) == asignatura:
+                self.tablaR.insert("", tk.END, text=f"{a[2]}", values=(a[1], a[4]))
                     
 
         self.tablaR.configure(height=24)
@@ -370,6 +384,74 @@ class Window(ctk.CTk):
         tree.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.RIGHT, fill="y")
         
+    def selectData(self):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        # Ejecuta una consulta SQL
+        cursor.execute("SELECT * FROM alumnos")
+
+        # Obtén los resultados de la consulta
+        results = cursor.fetchall()
+        #print(results)
+
+        for x in results:
+            # print(x)
+            self.alumnos.append(x)
+        #for x in results:
+         #   print(x[3])
+        # Cierra el cursor y la conexión
+        cursor.close()
+        conn.close()
+
+    def selectDataA(self):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia",
+            client_encoding='utf8'
+
+        )
+        cursor = conn.cursor()
+
+        # Ejecuta una consulta SQL
+        cursor.execute("SELECT * FROM materias")
+
+        # Obtén los resultados de la consulta
+        results = cursor.fetchall()
+        #print(results)
+        # for x in results:
+        #     print(str(x))
+            #self.asignaturas.append(x)
+
+
+
+        nombres_columnas = [desc[0] for desc in cursor.description]
+
+
+        lista_resultados = []
+        for resultado in results:
+            diccionario_resultado = {}
+            for indice, nombre_columna in enumerate(nombres_columnas):
+                diccionario_resultado[nombre_columna] = resultado[indice]
+                # print(resultado[indice])
+                self.asignaturas.append(resultado[indice])
+            lista_resultados.append(diccionario_resultado)       
+
+
+        cursor.close()
+        conn.close()
+
+
+
 
     def conectar(self):
 
@@ -381,7 +463,7 @@ class Window(ctk.CTk):
             database="estancia"
         )
         cursor = conn.cursor()
-        
+
         # Ejecuta una consulta SQL
         cursor.execute("SELECT * FROM alumnos")
 
