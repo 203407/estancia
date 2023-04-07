@@ -53,6 +53,7 @@ class Window(ctk.CTk):
         self.bottom_frame7 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame8 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame9 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame10 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
 
         #Barra de navegación superior
         self.top_frame.grid(padx=0, pady=0, row=0, column=0)
@@ -112,6 +113,7 @@ class Window(ctk.CTk):
         self.bottom_frame7.grid_remove()  
         self.bottom_frame8.grid_remove()         
         self.bottom_frame9.grid_remove()         
+        self.bottom_frame10.grid_remove()         
         
 
     def show_message(self, title, msj):
@@ -312,13 +314,9 @@ class Window(ctk.CTk):
         def getDataForLook():
             matrix = look.get()
 
-
-            # print(matrix)
-
             if matrix != "" and matrix != " ":
                 if  matrix.isdigit() == True:
-                    
-                    # print(matrix)
+                                        
                     self.viewLook(matrix)
                 else:
                     self.show_message("Mensaje", "Solo se aceptan numeros")                        
@@ -336,7 +334,13 @@ class Window(ctk.CTk):
         
 #///////////////////////////////////////////////////////////////////
 
+        style = ttk.Style()
+        style.configure("mystyle.Treeview", highlightthickness=0, bd=0, font=('Calibri', 11)) # Modify the font of the body
+        style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # Modify the font of the headings
+        # style.layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) # Remove the borders
+
         num_pairs = 15  # número de pares de columnas "inc" y "repro"
+        
         cols = ["Matricula", "Nombre"]
         self.datas = []
         for i in range(num_pairs):
@@ -346,7 +350,7 @@ class Window(ctk.CTk):
         # tree = ttk.Treeview(frame_table, columns=cols)
 
 
-        tree = ttk.Treeview(frame_table,height=3,columns=cols) # definir cuantas columnas tendra la tabla
+        tree = ttk.Treeview(frame_table,height=3,columns=cols,style="mystyle.Treeview") # definir cuantas columnas tendra la tabla
         tree.place(x=10,y=20, width=1500,height=400) # le
 
 
@@ -359,12 +363,6 @@ class Window(ctk.CTk):
             tree.heading(f"Repro{i+1}", text=f"Repro{i+1}",anchor="w")
 
 
-        style = ttk.Style()
-        style.configure("Custom.Treeview", borderwidth=10)
-
-        # aplicar estilo personalizado al Treeview
-        tree.configure(style="Custom.Treeview")
-
 
         def on_cell_click(event):
             # hacer algo cuando se hace clic en la celda
@@ -374,11 +372,9 @@ class Window(ctk.CTk):
             
             
             cell_value = event.widget.item(row_id)['values'][0]
-
-            # valor_celda = treeview.item(3, "values")[1] # "values" se refiere a las columnas de datos
+            
             
             if col_title in self.datas:
-                # messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")
                 print(f"Cell clicked: row={row_id}, col={col_id}, heading={col_title}")
                 #print(cell_value)
                 self.navigate()
@@ -400,20 +396,11 @@ class Window(ctk.CTk):
         for x in self.alumnos:
             tree.insert("", "end", text=k, values=[x[2], x[1]] + [" ", " "]*num_pairs)
             k+=1
-                
-
-        style = ttk.Style()
-        style.configure("Custom.Treeview", borderwidth=10)
-
-        # aplicar estilo personalizado al Treeview
-        tree.configure(style="Custom.Treeview")
-
+                        
     def viewLook(self,matricula):
         #expediente
         self.navigate()                
-        self.bottom_frame9.grid(padx=0, pady=0, row=1, column=0)
-        print("new view")
-        print(matricula)
+        self.bottom_frame9.grid(padx=0, pady=0, row=1, column=0)       
         alumnito = self.getByMatricula(matricula)
         incidencita = self.getByMatriculaIN(matricula)
         def bac():                    
@@ -507,6 +494,29 @@ class Window(ctk.CTk):
         frame_table = ctk.CTkFrame(master=self.bottom_frame4, width= 1100, height= 405,corner_radius=0)
         frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
 
+
+        look = tk.Entry(self.bottom_frame4, bg="white", font=("Arial", 12))
+        look.place(relx=0.71, rely=0.12, anchor=tk.CENTER,width=300,height=40)
+       
+
+        def getDataForLook():
+            matrix = look.get()
+
+            if matrix != "" and matrix != " ":
+                if  matrix.isdigit() == True:
+                                        
+                    self.viewLook2(matrix)
+                else:
+                    self.show_message("Mensaje", "Solo se aceptan numeros")                        
+            else:
+                self.show_message("Mensaje", "Campo vacio")                    
+                        
+
+
+        send = tk.Button(self.bottom_frame4, text="Buscar", command=getDataForLook)            
+        send.place(relx=0.85, rely=0.12, anchor=tk.CENTER,width=130,height=40)
+
+
         cols = ["Matricula", "Nombre",'gradoestar',"materiasqllevar","materiasaprobadas","materiasrepeticion","nommateriasrepe","cuatrimfalta","materiaqfalta","materiarezagada","nombremateriareza","nommatedeberia","nombrellevaactual"]
 
     
@@ -517,8 +527,6 @@ class Window(ctk.CTk):
         tree.heading("#0", text="ID",anchor="w")        
         tree.heading("Matricula", text="Matricula",anchor="w")
         tree.heading("Nombre", text="Nombre",anchor="w")
-
-
 
         
         tree.heading("gradoestar", text="gradoestar",anchor="w")
@@ -558,22 +566,12 @@ class Window(ctk.CTk):
             # print(column_id)
             cell_value = event.widget.item(row_id)['values'][int(col_id[1:])-1]
                      
-            # print(matricula)
-            # messagebox.showinfo(title="Celda clickeada", message=f"Clickeaste en la fila {row_id} y columna {col_id} ")                        
-            # print(cell_value)              
+             
             a = ""
             
             newca = ""
             if isinstance(cell_value, int) == False:
-                # for x in cell_value: 
-                #     if x == ',':
-                #         print(a)
-                #         newca =+ " " + str(a) + " "
-                #         a = ""                   
-                #     if x != "'" and x != "[" and x != "]"and x != " ":
-                #         print(a)
-                #         a += x               
-                # palabras = re.findall(r"'(\w+)'", cell_value)
+
                 
 
                 # print(palabras)
@@ -615,23 +613,10 @@ class Window(ctk.CTk):
                 
 
         tree.bind('<ButtonRelease-1>', on_cell_click)
-
-        # def getDataFromField5(testo):
-        #     p = ""
-        #     cons = 0
-        #     for k in testo:
-        #         if cons < len(testo)-1:
-        #             p += k + ","
-                            
-        #         else:
-        #             p += k                                                    
-        #         cons += 1
-        #     print(p)
-        #     return p            
+         
 
         l = 1
-        for x in self.alumnos:
-            
+        for x in self.alumnos:            
             
             for d in self.trayectoria:                                                  
                 if d[-1] == x[2]:                                        
@@ -640,6 +625,125 @@ class Window(ctk.CTk):
         
         tree.bind('<ButtonRelease-1>', on_cell_click)        
                  
+    def viewLook2(self,matricula):
+        self.navigate()               
+        alumnito = self.getByMatricula(matricula)
+
+        tray = self.selectDataTraByM(matricula)
+        # tray = self.g
+         
+        self.bottom_frame10.grid(padx=0, pady=0, row=1, column=0)
+        
+        
+        info_label = ctk.CTkLabel(master=self.bottom_frame10, corner_radius=0, text="Trayectoria", font=("Helvetica",  24, 'bold'))
+        info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
+
+        frame_table = ctk.CTkFrame(master=self.bottom_frame10, width= 1100, height= 405,corner_radius=0)
+        frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
+
+        def bac():                    
+            self.view4()
+
+        self.Back = ctk.CTkButton(master=self.bottom_frame10, text="Regresar", width= 140, height= 35, command=bac, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.Back.place(relx= 0.8, rely=0.1, anchor=tk.CENTER)
+
+        cols = ["Matricula", "Nombre",'gradoestar',"materiasqllevar","materiasaprobadas","materiasrepeticion","nommateriasrepe","cuatrimfalta","materiaqfalta","materiarezagada","nombremateriareza","nommatedeberia","nombrellevaactual"]
+
+    
+        tree = ttk.Treeview(frame_table,height=3,columns=cols) # definir cuantas columnas tendra la tabla
+        tree.place(x=10,y=20, width=1500,height=400) # le
+
+
+        tree.heading("#0", text="ID",anchor="w")        
+        tree.heading("Matricula", text="Matricula",anchor="w")
+        tree.heading("Nombre", text="Nombre",anchor="w")
+
+        
+        tree.heading("gradoestar", text="gradoestar",anchor="w")
+        tree.heading("materiasqllevar", text="materiasqllevar",anchor="w")
+        tree.heading("materiasaprobadas", text="materiasaprobadas",anchor="w")
+
+        tree.heading("materiasrepeticion", text="materiasrepeticion",anchor="w")
+        tree.heading("nommateriasrepe", text="nommateriasrepe",anchor="w")
+        tree.heading("cuatrimfalta", text="cuatrimfalta",anchor="w")
+        # tree.heading("MateriaRz", text="MateriaRz",anchor="w")
+        tree.heading("materiaqfalta", text="materiaqfalta",anchor="w")
+        tree.heading("materiarezagada", text="materiarezagada",anchor="w")
+        tree.heading("nombremateriareza", text="nombremateriareza",anchor="w")
+        tree.heading("nommatedeberia", text="nommatedeberia",anchor="w")
+        tree.heading("nombrellevaactual", text="nombrellevaactual",anchor="w")
+                               
+        # para definir la scrollbar vertical
+        scroll_databaseV = Scrollbar(frame_table, orient="vertical", command=tree.yview)
+        scroll_databaseV.place(x=10, y=20, height=400)
+        tree.configure(yscrollcommand=scroll_databaseV.set)
+
+        #para definir la scrollbar hortizontal
+        scroll_databaseH = Scrollbar(frame_table, orient="horizontal", command=tree.xview)
+        scroll_databaseH.place(x=10, y=420, width=1300)
+        tree.configure(xscrollcommand=scroll_databaseH.set)
+
+       
+        def on_cell_click(event):
+                                   
+            row_id = event.widget.focus()
+            col_id = event.widget.identify_column(event.x)
+            col_title = event.widget.heading(col_id)['text']
+            matricula = event.widget.item(row_id)['values'][0]
+
+            # print(column_id)
+            cell_value = event.widget.item(row_id)['values'][int(col_id[1:])-1]
+                     
+             
+            a = ""                        
+            if isinstance(cell_value, int) == False:
+                
+                # print(palabras)
+                if col_title != 'Nombre' and col_title != 'Matricula':
+                    new_value = simpledialog.askstring("Editar celda", f"Ingrese un nuevo valor para la celda:", initialvalue=cell_value)                           
+                    
+                    if col_title != "nombremateriareza":
+                        print(new_value)
+                        a = new_value.replace(" ", "")
+
+                        a = a.split(",")         
+
+                        print(a)                                
+                        print(matricula)
+                        print(col_title)
+                        print(a)
+                        self.updateTrayectoria(col_title,a,matricula)
+                    else:
+                        self.updateTrayectoria(col_title,new_value,matricula)
+
+                    self.navigate()
+                    self.view4()
+                else:
+                    self.show_message("Mensaje", "Celda no editable") 
+            else:
+
+                if col_title != 'Nombre' and col_title != 'Matricula':
+                    new_value = simpledialog.askstring("Editar celda", f"Ingrese un nuevo valor para la celda:", initialvalue=cell_value)
+                    
+                    print(new_value)
+                    print(matricula)
+                    print(col_title)
+
+                    self.updateTrayectoria(col_title,int (new_value),matricula)
+                    self.navigate()
+                    self.view4()
+                else:
+                    self.show_message("Mensaje", "Celda no editable") 
+                
+
+        tree.bind('<ButtonRelease-1>', on_cell_click)
+                         
+        print(alumnito[0][2])                                           
+        if tray[-1] == alumnito[0][2]:                                        
+            tree.insert("", "end", text=1, values=[alumnito[0][2], alumnito[0][1], tray[0], tray[1], tray[2] , tray[3], "vacio" if tray[4] == [''] else tray[4], tray[5], "vacio" if tray[6] == [''] else tray[6], tray[7], "vacio" if tray[8] == ""else tray[8],  "vacio" if tray[9] == [''] else tray[9], "vacio" if tray[10] == [''] else tray[10]])                                
+        
+        tree.bind('<ButtonRelease-1>', on_cell_click)     
+
     def view5(self):
         #reprobados
         self.alumnos = []
@@ -938,10 +1042,7 @@ class Window(ctk.CTk):
         conn.close()
 
         return results
-    
-    
-
-    
+            
     def createInci(self,matricula,cuatri,datas):
         conn = psycopg2.connect(
                 user="postgres",
@@ -1343,3 +1444,22 @@ class Window(ctk.CTk):
 
                 cursor.close()
                 conn.close()
+
+    def selectDataTraByM(self,matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute(f'SELECT * FROM trayectoria Where matriculaalumno = {matricula}')
+        
+        results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return results[0]

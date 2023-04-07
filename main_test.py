@@ -1,3 +1,4 @@
+import json
 import tkinter as tk
 import customtkinter as ctk 
 from tkinter import filedialog
@@ -7,10 +8,7 @@ import PyPDF2, re
 import uuid
 import psycopg2
 
-
-
 from alumno import Alumno
-
 
 
 def get_reprobados(pdf_reader, asignatura, periodo):
@@ -21,26 +19,49 @@ def get_reprobados(pdf_reader, asignatura, periodo):
         text = page.extract_text()
         lines = text.split('\n')
         for line in lines:
+            # print(lines)
             if cont > 5:
                 match = re.match(r'(\b\w+\b.*?)(\d+\s+\d+)', line)
                 if match != None:
                     part1 = match.group(1)
                     part2 = match.group(2)
                     calificaciones = part2.split(" ")
+                    # print(calificaciones)
                     for c in calificaciones:
                         if int(c) < 70:
                             id_unico = uuid.uuid4()
                             x = ''+  str(id_unico) 
-                            a = Alumno(x,part1, asignatura, periodo, calificaciones)                                                        
-                            insertarData(a.id,a.nombre,a.m,asignatura,periodo)                            
-                            createTrayecotira(a.m)
+                            a = Alumno(x,part1, asignatura, periodo, calificaciones)   
 
-                            #win.alumnos.append(a)
+                            resultado = getByMatricula(a.m)
+                            mats = {f'{asignatura}':f'{periodo}'}
+                            new_json_string = json.dumps(mats)
+                            nn = json.loads(new_json_string)
+
+                            if resultado == []:
+                                insertarData(a.id,a.nombre,a.m,asignatura,periodo,new_json_string)                                                     
+                                createTrayecotira(a.m)                                
+                            else:
+                                
+                                rs = json.dumps(resultado[0][-1])
+                                materias = json.loads(rs)
+                                                                
+                                # print(new_json_string)
+
+                                if all(item in materias.items() for item in nn.items()):
+                                    print("El contenido de 'a' está presente en 'materias'")
+                                else:
+                                    print("El contenido de 'a' no está presente en 'materias'")                                
+                                    materias.update(nn)       
+                                    ma = json.dumps(materias)                             
+                                    updateusuario(a.m,ma)
+                                    print("el alumno ya esta en la base de datos pero se actualizo")                            
+                                                                                               
                             break
 
             cont += 1
                 
-def insertarData(id,nombre,matricula,materiaR,periodo):
+def insertarData(id,nombre,matricula,materiaR,periodo,mats):
     conn = psycopg2.connect(
             user="postgres",
             password="carrera10",
@@ -50,16 +71,19 @@ def insertarData(id,nombre,matricula,materiaR,periodo):
         )
     cursor = conn.cursor()
 
-    sql = f"INSERT INTO alumnos (id, nombre, matricula,materiar,periodo) VALUES ('{id}','{nombre}',{matricula},'{materiaR}','{periodo}')"
+    # sql = f"INSERT INTO alumnos (id, nombre, matricula,materiar,periodo,mats) VALUES ('{id}','{nombre}',{matricula},'{materiaR}','{periodo}',{mats})"
+    sql = "INSERT INTO alumnos (id, nombre, matricula,materiar,periodo,mats) VALUES (%s,%s,%s,%s,%s,%s)"
+    
+    valores = (id,nombre,matricula,materiaR,periodo,mats)       
 
-    cursor.execute(sql);
+    cursor.execute(sql, valores)    
+    
 
     conn.commit()
 
     cursor.close()
     conn.close()
     
-
 def get_periodo(pdf_reader):
     search = "PERIODO"
     rule = "\d\s[A-Z]{2}"
@@ -84,7 +108,6 @@ def get_periodo(pdf_reader):
             break
     return periodo, profesor
 
-
 def get_asignatura(pdf_reader):
     search = "ASIGNATURA"
     rule = '\s[A-Z]{2}'
@@ -106,7 +129,6 @@ def get_asignatura(pdf_reader):
             break
     return value
 
-   
 def get_data():
     print(FILEPATH)
     pdf_file = open(FILEPATH, 'rb')
@@ -126,7 +148,17 @@ def get_data():
         if asignatura not in win.asignaturas and asignatura != None:
             #win.asignaturas.append(asignatura)
             print(asignatura)
-            insertarDataA(asignatura)
+            resultado = selectdatasMaterias()
+            aux = 0
+            for x in resultado:
+                if x[0] == asignatura:
+                    aux = 1
+                    break;
+            if aux == 0:
+                insertarDataA(asignatura)
+            else:
+                print("la materia ya esta en la base de datos")
+
             print(win.asignaturas)
 
     pdf_file.close()
@@ -182,7 +214,76 @@ def select_file():
     label = ctk.CTkLabel(master=win.bottom_frame, text=FILEPATH)
     label.place(relx= 0.5, rely=0.45, anchor=tk.CENTER)
 
-     
+
+def getByMatricula(matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()        
+        # Ejecuta una consulta SQL
+        cursor.execute(f"SELECT * FROM alumnos WHERE matricula={matricula}" )
+
+        # Obtén los resultados de la consulta
+        results = cursor.fetchall()
+        # print(results)
+        
+        cursor.close()
+        conn.close()
+
+        return results
+
+
+def updateusuario(matricula,datase):
+            conn = psycopg2.connect(
+                    user="postgres",
+                    password="carrera10",
+                    host="localhost",
+                    port="5432",   
+                    database="estancia"
+                )
+            cursor = conn.cursor()                    
+
+            campo = 'mats'
+            valores = (datase,matricula)
+            
+            
+            sql = "UPDATE alumnos SET {} = %s WHERE matricula = %s".format(campo)
+            cursor.execute(sql, valores)
+
+            conn.commit()
+
+            cursor.close()
+            conn.close()
+            
+
+def selectdatasMaterias():
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT * FROM materias")
+        
+        results = cursor.fetchall()
+
+        # for x in results:                
+        #         if x[0] == "Calidad del Software":
+        #                 print("si esta")
+                        
+                           
+        cursor.close()
+        conn.close()
+
+        return results
+
 if __name__ == "__main__":
     win = Window(select_file, get_data)
     win.mainloop()

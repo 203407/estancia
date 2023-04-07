@@ -29,28 +29,43 @@ import psycopg2
 
 # # createUser()
 
-# def selectData():
-#         conn = psycopg2.connect(
-#             user="postgres",
-#             password="carrera10",
-#             host="localhost",
-#             port="5432",   
-#             database="estancia"
-#         )
-#         cursor = conn.cursor()
+def selectData():
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
 
-#         cursor.execute("SELECT * FROM trayectoria")
+        cursor.execute(f'SELECT * FROM alumnos WHERE matricula = {183392}')
         
-#         results = cursor.fetchall()
+        results = cursor.fetchall()
 
-#         for x in results:                
-#             print(x[-1])
+        # print(results[0][-1])
+        a = json.dumps(results[0][-1])
+        materias = json.loads(a)
+        j = json.dumps({"Calidad del Software": "SEPTIEMBRE-DICIEMBRE 2020"})
+        mate = json.loads(j)
+        print(materias)
+        print(mate)
+
+        
+        if all(item in materias.items() for item in mate.items()):
+                print("El contenido de 'a' está presente en 'materias'")
+        else:
+                print("El contenido de 'a' no está presente en 'materias'")
+        # for t in x:
+        #         print(t)
+                
+        # for x in results[0][-1]:
+        #         print(x)
             
-#         cursor.close()
-#         conn.close()
+        cursor.close()
+        conn.close()
 
-# # selectData()
-
+# selectData()
 
 def updateusuario():
             conn = psycopg2.connect(
@@ -60,15 +75,21 @@ def updateusuario():
                     port="5432",   
                     database="estancia"
                 )
-            cursor = conn.cursor()        
-            materia = "a"
-            newmateroa = materia+" asdasd"
-        
-              
-            valores = (dato,magticula)
+            cursor = conn.cursor()                    
+
+            a = '{"Calidad del Software": "SEPTIEMBRE-DICIEMBRE 2020"}'
+            b = '{"Mantenimiento de Software": "MAYO-AGOSTO 2021"}'
+
+            json_a = json.loads(a)
+            json_b = json.loads(b)
+            
+            json_a.update(json_b)                                
+            matricula = 183392
+            campo = 'mats'
+            valores = (json.dumps(json_a),matricula)
             
             
-            sql = "UPDATE trayectoria SET {} = %s WHERE matriculaalumno = %s".format(campo)
+            sql = "UPDATE alumnos SET {} = %s WHERE matricula = %s".format(campo)
             cursor.execute(sql, valores)
 
             conn.commit()
@@ -76,8 +97,10 @@ def updateusuario():
             cursor.close()
             conn.close()
 
-updateTrayectoria()
 
+# updateusuario()
+
+# updateTrayectoria()
 
 def selectData():
         conn = psycopg2.connect(
@@ -134,8 +157,6 @@ def createInci():
 # createInci()
 
 
-
-
 def updateInciN():
         conn = psycopg2.connect(
                 user="postgres",
@@ -187,8 +208,6 @@ def intertUser():
         cursor.close()
         conn.close()
 
-
-
 def intertUser2():
         conn = psycopg2.connect(
                 user="postgres",
@@ -201,23 +220,21 @@ def intertUser2():
         
                 
        # Definimos los dos JSON
-        json_string1 = '{"as":"bs", "dsds":"c"}'
-        json_string2 = '{"nombre":"a", "data":"dasd"}'
+        json_string1 = '{"as2":"perido 202--20", "dddds ":"perido 10023"}'        
 
         # Convertimos los dos JSON en objetos Python
-        json_obj1 = json.loads(json_string1)
-        json_obj2 = json.loads(json_string2)
+        # json_obj1 = json.loads(json_string1)        
 
         # Combinamos los dos objetos Python en uno solo
-        new_json_obj = {**json_obj1, **json_obj2}
+        # new_json_obj = {**json_obj1, **json_obj2}
 
         # Convertimos el objeto Python resultante en un nuevo JSON
-        new_json_string = json.dumps(new_json_obj)
+        new_json_string = json.dumps(json_string1)
         
-        sql = "INSERT INTO tes (testd) VALUES (%s)"
-        valores = (new_json_string)
+        sql = "INSERT INTO tes (testd,dds) VALUES (%s,%s)"
+        valores = (new_json_string,'l')       
 
-        cursor.execute(sql, (valores,))
+        cursor.execute(sql, valores)
 
         conn.commit()
 
@@ -236,13 +253,19 @@ def selectdatas():
         )
         cursor = conn.cursor()
 
-        cursor.execute("SELECT * FROM tes")
+        cursor.execute("SELECT * FROM materias")
         
         results = cursor.fetchall()
+        
 
-        for x in results:
-                print(x[0])
-                print(x[0])
+        for x in results:                
+                if x[0] == "Calidad del Software":
+                        print("si esta")
+                        
+
+        # for x in results:
+        #         print(x[0])
+        #         print(x[0])
         # print(results[0][0])
 
         # if  results[0][0] == None:
@@ -256,6 +279,75 @@ def selectdatas():
 # intertUser()
 # selectdatas()
 
+def getByMatricula():
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()        
+        # Ejecuta una consulta SQL
+        
+        matricula = 183392
+        
+        a = {"base de datos":"Periodo abril-marzo"}
+
+        materias = {"base de datos":"Periodo abril-marzo",
+                    "IA":"Periodo mayo-diciemre"}
+
+        cursor.execute(f"SELECT * FROM alumnos WHERE matricula={matricula}" )
+
+        # Obtén los resultados de la consulta
+        results = cursor.fetchall()
+        # print(results)
+        
+        if results!= []:                
+                print(results)
+        else:
+                print("no hay alumno con esa matricula")
+
+        cursor.close()
+        conn.close()
+
+        return results
+
+# getByMatricula()
 # a = {"nombre":"jose","edad":1,"nombre":"jose","edad":1}
 # for x in a:
 #         print(x)
+
+# a = {"base de datos":"Periodo abril-marzo"}
+# materias = {"base de datos":"Periodo abril-marzo", "IA":"Periodo mayo-diciembre"}
+
+# if all(item in materias.items() for item in a.items()):
+#     print("El contenido de 'a' está presente en 'materias'")
+# else:
+#     print("El contenido de 'a' no está presente en 'materias'")
+
+# print(a[0])
+
+
+def selectDataTraByM(matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        cursor.execute(f'SELECT * FROM trayectoria Where matriculaalumno = {matricula}')
+        
+        results = cursor.fetchall()
+
+        print(results[0])
+            
+        cursor.close()
+        conn.close()
+
+        # return results
+
+selectDataTraByM(183392)
