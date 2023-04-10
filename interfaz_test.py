@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 import tkinter as tk
 from tkinter import END, Scrollbar, ttk
 from tkinter import messagebox
@@ -13,6 +14,7 @@ import json
 import urllib.request
 from urllib.request import urlretrieve
 import re
+from decouple import config 
 
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -39,9 +41,88 @@ class Window(ctk.CTk):
         datas = []
         self.tabla_trayectoria= None
         self.trayectoria = []
+
+        self.nombre_archivo = "datos.txt"
+
+        # Verificar si el archivo existe
+        if os.path.exists(self.nombre_archivo):
+            print("El archivo ya existe.")
+        else:            
+            self.archivo = open(self.nombre_archivo, "w")
+            self.archivo.close()
+            print("El archivo ha sido creado.")       
+
+        self.fechas = {
+
+            "183": {"SEPTIEMBRE-DICIEMBRE 2018":1,"ENERO-ABRIL 2019":2,"MAYO-AGOSTO 2019":3,"SEPTIEMBRE-DICIEMBRE 2019":4,"ENERO-ABRIL 2020":5,"MAYO-AGOSTO 2020":6,"SEPTIEMBRE-DICIEMBRE 2020":7,"ENERO-ABRIL 2021":8,"MAYO-AGOSTO 2021":9,"SEPTIEMBRE-DICIEMBRE 2021":10,"ENERO-ABRIL 2022":11,"MAYO-AGOSTO 2022":12,"SEPTIEMBRE-DICIEMBRE 2022":13,"ENERO-ABRIL 2023":14,"MAYO-AGOSTO 2023":15},
+
+            "191": {"ENERO-ABRIL 2019":1,"MAYO-AGOSTO 2019":2,"SEPTIEMBRE-DICIEMBRE 2019":3,"ENERO-ABRIL 2020":4,"MAYO-AGOSTO 2020":5,"SEPTIEMBRE-DICIEMBRE 2020":6,"ENERO-ABRIL 2021":7,"MAYO-AGOSTO 2021":8,"SEPTIEMBRE-DICIEMBRE 2021":9,"ENERO-ABRIL 2022":10,"MAYO-AGOSTO 2022":11,"SEPTIEMBRE-DICIEMBRE 2022":12,"ENERO-ABRIL 2023":13,"MAYO-AGOSTO 2023":14,"SEPTIEMBRE-DICIEMBRE 2023":15},
+
+            "193": {"ENERO-ABRIL 2023":11,"MAYO-AGOSTO 2023":12,"SEPTIEMBRE-DICIEMBRE 2023":13,"ENERO-ABRIL 2024":14,"MAYO-AGOSTO 2024":15},
+
+            "201": {"ENERO-ABRIL 2023":10,"MAYO-AGOSTO 2023":11,"SEPTIEMBRE-DICIEMBRE 2023":12,"ENERO-ABRIL 2024":13,"MAYO-AGOSTO 2024":14,"SEPTIEMBRE-DICIEMBRE 2024":15},
+
+            "203": {"ENERO-ABRIL 2023":8,"MAYO-AGOSTO 2023":9,"SEPTIEMBRE-DICIEMBRE 2023":10,"ENERO-ABRIL 2024":11,"MAYO-AGOSTO 2024":12,"SEPTIEMBRE-DICIEMBRE 2024":13,"ENERO-ABRIL 2025":14,"MAYO-AGOSTO 2025":15},
+
+            "211": {"ENERO-ABRIL 2023":7,"MAYO-AGOSTO 2023":8,"SEPTIEMBRE-DICIEMBRE 2023":9,"ENERO-ABRIL 2024":10,"MAYO-AGOSTO 2024":11,"SEPTIEMBRE-DICIEMBRE 2024":12,"ENERO-ABRIL 2025":13,"MAYO-AGOSTO 2025":14,"SEPTIEMBRE-DICIEMBRE 2025":15},
+
+            "213": {"ENERO-ABRIL 2023":5,"MAYO-AGOSTO 2023":6,"SEPTIEMBRE-DICIEMBRE 2023":7,"ENERO-ABRIL 2024":8,"MAYO-AGOSTO 2024":9,"SEPTIEMBRE-DICIEMBRE 2024":10,"ENERO-ABRIL 2025":11,"MAYO-AGOSTO 2025":12,"SEPTIEMBRE-DICIEMBRE 2025":13,"ENERO-ABRIL 2026":14,"MAYO-AGOSTO 2026":15},
+
+            "221": {"ENERO-ABRIL 2023":4,"MAYO-AGOSTO 2023":5,"SEPTIEMBRE-DICIEMBRE 2023":6,"ENERO-ABRIL 2024":7,"MAYO-AGOSTO 2024":8,"SEPTIEMBRE-DICIEMBRE 2024":9,"ENERO-ABRIL 2025":10,"MAYO-AGOSTO 2025":11,"SEPTIEMBRE-DICIEMBRE 2025":12,"ENERO-ABRIL 2026":13,"MAYO-AGOSTO 2026":14,"SEPTIEMBRE-DICIEMBRE 2026":15},
+
+            "223": {"ENERO-ABRIL 2023":2,"MAYO-AGOSTO 2023":3,"SEPTIEMBRE-DICIEMBRE 2023":4,"ENERO-ABRIL 2024":5,"MAYO-AGOSTO 2024":6,"SEPTIEMBRE-DICIEMBRE 2024":7,"ENERO-ABRIL 2025":8,"MAYO-AGOSTO 2025":9,"SEPTIEMBRE-DICIEMBRE 2025":10,"ENERO-ABRIL 2026":11,"MAYO-AGOSTO 2026":12,"SEPTIEMBRE-DICIEMBRE 2026":13,"ENERO-ABRIL 2027":14,"MAYO-AGOSTO 2027":15},
+
+            "231": {"ENERO-ABRIL 2023":1,"MAYO-AGOSTO 2023":2,"SEPTIEMBRE-DICIEMBRE 2023":3,"ENERO-ABRIL 2024":4,"MAYO-AGOSTO 2024":5,"SEPTIEMBRE-DICIEMBRE 2024":6,"ENERO-ABRIL 2025":7,"MAYO-AGOSTO 2025":8,"SEPTIEMBRE-DICIEMBRE 2025":9,"ENERO-ABRIL 2026":10,"MAYO-AGOSTO 2026":11,"SEPTIEMBRE-DICIEMBRE 2026":12,"ENERO-ABRIL 2027":13,"MAYO-AGOSTO 2027":14,"SEPTIEMBRE-DICIEMBRE 2027":15},
+
+        }
+
+        self.periodosAca = {
+
+            "183": ["SEPTIEMBRE-DICIEMBRE 2018","ENERO-ABRIL 2019","MAYO-AGOSTO 2019","SEPTIEMBRE-DICIEMBRE 2019","ENERO-ABRIL 2020","MAYO-AGOSTO 2020","SEPTIEMBRE-DICIEMBRE 2020","ENERO-ABRIL 2021","MAYO-AGOSTO 2021","SEPTIEMBRE-DICIEMBRE 2021","ENERO-ABRIL 2022","MAYO-AGOSTO 2022","SEPTIEMBRE-DICIEMBRE 2022","ENERO-ABRIL 2023","MAYO-AGOSTO 2023"],
+
+            "191": ["ENERO-ABRIL 2019","MAYO-AGOSTO 2019","SEPTIEMBRE-DICIEMBRE 2019","ENERO-ABRIL 2020","MAYO-AGOSTO 2020","SEPTIEMBRE-DICIEMBRE 2020","ENERO-ABRIL 2021","MAYO-AGOSTO 2021","SEPTIEMBRE-DICIEMBRE 2021","ENERO-ABRIL 2022","MAYO-AGOSTO 2022","SEPTIEMBRE-DICIEMBRE 2022","ENERO-ABRIL 2023","MAYO-AGOSTO 2023","SEPTIEMBRE-DICIEMBRE 2023"],        
         
+        }
+     
+        self.inicios = {
+            "181":"ENERO-ABRIL 2018",
+
+            "183":"SEPTIEMBRE-DICIEMBRE 2018",
+
+            "191":"ENERO-ABRIL 2019",
+
+            "193":"SEPTIEMBRE-DICIEMBRE 2019",
+
+            "201":"ENERO-ABRIL 2020",
+
+            "203":"SEPTIEMBRE-DICIEMBRE 2020",
+
+            "211":"ENERO-ABRIL 2021",
+
+            "213":"SEPTIEMBRE-DICIEMBRE 2021",
+
+            "221":"ENERO-ABRIL 2022",
+
+            "223":"SEPTIEMBRE-DICIEMBRE 2022",
+
+            "231":"ENERO-ABRIL 2023",
+
+            "233":"SEPTIEMBRE-DICIEMBRE 2023",
+
+            "241":"ENERO-ABRIL 2024",
+        }
+        
+        # print(self.inicios)
+        # print("aquiiiiiiiiiiiii")
+        # print(self.fechas["183"]["ENERO-ABRIL 2021"])
+        # print(fechas["231"])
+
         hanbi = False
-        
+        self.usuariodb = ""
+        self.passdb = ""
+        self.portdb = ""
+        self.namedb = ""
+
         #Paginas/vistas
         self.top_frame = ctk.CTkFrame(master=self, width=1400, height=180, corner_radius=0, fg_color="#E5E5E5") 
         self.bottom_frame = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
@@ -54,14 +135,18 @@ class Window(ctk.CTk):
         self.bottom_frame8 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame9 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
         self.bottom_frame10 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame20 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame21 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
+        self.bottom_frame22 = ctk.CTkFrame(master=self, width=1400, height=570, corner_radius=0, fg_color="#F5F5F5")
 
         #Barra de navegación superior
         self.top_frame.grid(padx=0, pady=0, row=0, column=0)
-        
+        fotico = self.resource_path('logo.png')
+
         #Logo y titulo (Barra de navegación superior)
-        logo = ctk.CTkImage(light_image=Image.open('img/logo.png'), dark_image=Image.open('img/logo.png'), size=(105,105))
-        logo_label = ctk.CTkLabel(master=self.top_frame, corner_radius=0, image=logo, text="")
-        logo_label.place(relx=0.340, rely=0.5, anchor=tk.CENTER)
+        # logo = ctk.CTkImage(light_image=Image.open(fotico), dark_image=Image.open(fotico), size=(105,105))
+        # logo_label = ctk.CTkLabel(master=self.top_frame, corner_radius=0, image=logo, text="")
+        # logo_label.place(relx=0.340, rely=0.5, anchor=tk.CENTER)
         title_label = ctk.CTkLabel(master=self.top_frame, corner_radius=0, text="Programa indicadores CACEI", font=("Helvetica",  28, 'bold'))
         title_label.place(relx=0.540, rely=0.375, anchor=tk.CENTER)
 
@@ -72,16 +157,28 @@ class Window(ctk.CTk):
         self.nav_btn_2.place(relx=0.474, rely=0.625, anchor=tk.CENTER)
         self.nav_btn_3 = ctk.CTkButton(master=self.top_frame, text="Expediente", width=40 , command=self.view3, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
         self.nav_btn_3.place(relx=0.543, rely=0.625, anchor=tk.CENTER)
-        self.nav_btn_4 = ctk.CTkButton(master=self.top_frame, text="Trayectoria", width=40 , command=self.view4, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_4 = ctk.CTkButton(master=self.top_frame, text="TrayectoriaI", width=40 , command=self.view4, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
         self.nav_btn_4.place(relx=0.600, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_7 = ctk.CTkButton(master=self.top_frame, text="TrayectoriaG", width=40 , command=self.viewTrayeG, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
+        self.nav_btn_7.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
         self.nav_btn_5 = ctk.CTkButton(master=self.top_frame, text="Reprobados", width=40 , command=self.view5, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
-        self.nav_btn_5.place(relx=0.657, rely=0.625, anchor=tk.CENTER)
+        self.nav_btn_5.place(relx=0.710, rely=0.625, anchor=tk.CENTER)
         self.nav_btn_6 = ctk.CTkButton(master=self.top_frame, text="Cerrar", width=40 ,command=self.logout, corner_radius=0, fg_color="transparent", text_color="black", hover_color="#E5E5E5",state="disabled")
-        self.nav_btn_6.place(relx=0.710, rely=0.625, anchor=tk.CENTER)        
+        self.nav_btn_6.place(relx=0.770, rely=0.625, anchor=tk.CENTER)        
 
         # self.view1()
         self.viewL()
-        
+    
+    def resource_path(self,relative_path):
+        # """ Get absolute path to resource, works for dev and for PyInstaller """
+        try:
+            # PyInstaller creates a temp folder and stores path in _MEIPASS
+            base_path = sys._MEIPASS
+        except Exception:
+            base_path = os.path.abspath(".")
+
+        return os.path.join(base_path, relative_path)
+
     def chanteStatus(self):
         self.nav_btn_1.configure(state="normal")
         self.nav_btn_2.configure(state="normal")
@@ -89,6 +186,7 @@ class Window(ctk.CTk):
         self.nav_btn_4.configure(state="normal")
         self.nav_btn_5.configure(state="normal")
         self.nav_btn_6.configure(state="normal")        
+        self.nav_btn_7.configure(state="normal") 
 
     def changedagain(self):
         self.nav_btn_1.configure(state="disabled")
@@ -97,6 +195,7 @@ class Window(ctk.CTk):
         self.nav_btn_4.configure(state="disabled")
         self.nav_btn_5.configure(state="disabled")
         self.nav_btn_6.configure(state="disabled")        
+        self.nav_btn_7.configure(state="disabled") 
 
     def logout(self):
         self.navigate()
@@ -114,8 +213,10 @@ class Window(ctk.CTk):
         self.bottom_frame8.grid_remove()         
         self.bottom_frame9.grid_remove()         
         self.bottom_frame10.grid_remove()         
+        self.bottom_frame20.grid_remove()       
+        self.bottom_frame21.grid_remove()  
+        self.bottom_frame22.grid_remove()  
         
-
     def show_message(self, title, msj):
         messagebox.showinfo(message=msj, title=title)
     
@@ -123,6 +224,33 @@ class Window(ctk.CTk):
         self.navigate()
         self.bottom_frame7.grid(padx=0, pady=0, row=1, column=0)
         
+        def actualizarData():
+            
+            nombre_archivo = "datos.txt"
+            tamanio = os.path.getsize(nombre_archivo)
+            if tamanio == 0:
+                print("El archivo está vacío.")
+                self.show_message("Mensaje", "No existe la configuracion")                    
+            else:                
+                self.archivo = open("datos.txt", "r")            
+                lineas = self.archivo.readlines()
+                
+                self.archivo.close()            
+                datos = []                                
+                for linea in lineas:                
+                    linea = linea.rstrip("\n")                
+                    datos.append(linea)
+                
+                # print(datos[0])
+                self.usuariodb= datos[0]
+                # print(datos[1])
+                self.passdb = datos[1]
+                # print(datos[2])
+                self.portdb = datos[2]
+
+                self.namedb = datos[3]
+                print(self.namedb)
+
         user_l = ctk.CTkLabel(master=self.bottom_frame7, corner_radius=0, text='Usuario:', font=("Helvetica",  24, 'bold'))
         user_l.place(relx=0.38, rely=0.22, anchor=tk.CENTER)      
 
@@ -133,11 +261,13 @@ class Window(ctk.CTk):
         pass_l = ctk.CTkLabel(master=self.bottom_frame7, corner_radius=0, text='Contraseña:', font=("Helvetica",  24, 'bold'))
         pass_l.place(relx=0.38, rely=0.33, anchor=tk.CENTER)  
 
-        passwf = ctk.CTkEntry(self.bottom_frame7,  font=("Arial", 12),corner_radius=10,border_width=2)
+        passwf = ctk.CTkEntry(self.bottom_frame7,  font=("Arial", 12),corner_radius=10,border_width=2,show='*')
         passwf.place(relx=0.55, rely=0.33, anchor=tk.CENTER,width=300,height=60)
        
         
         def checkLogin():
+
+            actualizarData()
             usuario = users.get()
             contrasena = passwf.get()
 
@@ -171,6 +301,67 @@ class Window(ctk.CTk):
 
         self.btnkm = ctk.CTkButton(master=self.bottom_frame7, text="Registrarse", width= 140, height= 35, command=changeview, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
         self.btnkm.place(relx= 0.58, rely=0.43, anchor=tk.CENTER)
+        
+        self.btnkm = ctk.CTkButton(master=self.bottom_frame7, text="configuracion", width= 140, height= 35, command=self.config, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnkm.place(relx= 0.90, rely=0.05, anchor=tk.CENTER)
+    
+    def config(self):
+        self.navigate()
+        self.bottom_frame22.grid(padx=0, pady=0, row=1, column=0)
+
+        def back():            
+            self.viewL()
+    
+        self.btnkm = ctk.CTkButton(master=self.bottom_frame22, text="Regresar", width= 140, height= 35, command=back, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnkm.place(relx= 0.90, rely=0.05, anchor=tk.CENTER)
+
+        def saveData():
+
+            nombre_archivo = "datos.txt"            
+            archivo = open(nombre_archivo, "w")            
+            archivo.truncate()            
+            archivo.close()
+
+            self.archivo = open("datos.txt", "a")
+            usuario = userc.get()
+            contra = passc.get()
+            port = puertoc.get()
+            names = namec.get()
+
+            # Escribir datos en el archivo
+            self.archivo.write(f'{usuario}\n')
+            self.archivo.write(f'{contra}\n')
+            self.archivo.write(f'{port}\n')
+            self.archivo.write(f'{names}\n')
+            self.archivo.close()
+            self.show_message("Mensaje", "Actualizado correctamente")     
+
+        userk = ctk.CTkLabel(master=self.bottom_frame22, corner_radius=0, text='Usuario db:', font=("Helvetica",  24, 'bold'))
+        userk.place(relx=0.38, rely=0.22, anchor=tk.CENTER)      
+
+        userc = ctk.CTkEntry(self.bottom_frame22,  font=("Arial", 12),corner_radius=10,border_width=2)
+        userc.place(relx=0.55, rely=0.22, anchor=tk.CENTER,width=300,height=60)
+
+        passk = ctk.CTkLabel(master=self.bottom_frame22, corner_radius=0, text='Password db:', font=("Helvetica",  24, 'bold'))
+        passk.place(relx=0.38, rely=0.35, anchor=tk.CENTER)      
+
+        passc = ctk.CTkEntry(self.bottom_frame22,  font=("Arial", 12),corner_radius=10,border_width=2)
+        passc.place(relx=0.55, rely=0.35, anchor=tk.CENTER,width=300,height=60)
+
+        puerto = ctk.CTkLabel(master=self.bottom_frame22, corner_radius=0, text='Puerto db:', font=("Helvetica",  24, 'bold'))
+        puerto.place(relx=0.38, rely=0.47, anchor=tk.CENTER)      
+
+        puertoc = ctk.CTkEntry(self.bottom_frame22,  font=("Arial", 12),corner_radius=10,border_width=2)
+        puertoc.place(relx=0.55, rely=0.47, anchor=tk.CENTER,width=300,height=60)
+        
+        name = ctk.CTkLabel(master=self.bottom_frame22, corner_radius=0, text='Nombre db:', font=("Helvetica",  24, 'bold'))
+        name.place(relx=0.38, rely=0.59, anchor=tk.CENTER)      
+
+        namec = ctk.CTkEntry(self.bottom_frame22,  font=("Arial", 12),corner_radius=10,border_width=2)
+        namec.place(relx=0.55, rely=0.59, anchor=tk.CENTER,width=300,height=60)
+
+        btns = ctk.CTkButton(master=self.bottom_frame22, text="Guardar", width= 170, height= 50, command=saveData, corner_radius=3, fg_color="#404CBB", text_color="white", hover_color="#4554DD", font=("Helvetica",  17, 'bold'))
+        btns.place(relx= 0.5, rely=0.78, anchor=tk.CENTER)
 
     def viewRe(self):
         
@@ -202,6 +393,12 @@ class Window(ctk.CTk):
         
         rol_label = ctk.CTkLabel(master=self.bottom_frame8, corner_radius=0, text='Rol de usuario:', font=("Helvetica",  24, 'bold'))
         rol_label.place(relx=0.35, rely=0.45, anchor=tk.CENTER)      
+
+        def back():            
+            self.viewL()
+    
+        self.btnkm = ctk.CTkButton(master=self.bottom_frame8, text="Regresar", width= 140, height= 35, command=back, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.btnkm.place(relx= 0.90, rely=0.05, anchor=tk.CENTER)
 
         # opcion_seleccionada = tk.StringVar()
         # lista_desplegable = tk.OptionMenu(self.bottom_frame8, opcion_seleccionada, * roles)    
@@ -323,21 +520,19 @@ class Window(ctk.CTk):
             else:
                 self.show_message("Mensaje", "Campo vacio")                    
                         
-
+        # print(self.alumnos[0])
 
         send = tk.Button(self.bottom_frame3, text="Buscar", command=getDataForLook)            
         send.place(relx=0.85, rely=0.12, anchor=tk.CENTER,width=130,height=40)
 
 
-        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1100, height= 385,corner_radius=0)
+        frame_table = ctk.CTkFrame(master=self.bottom_frame3, width= 1200, height= 385,corner_radius=0)
         frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
         
-#///////////////////////////////////////////////////////////////////
 
         style = ttk.Style()
         style.configure("mystyle.Treeview", highlightthickness=0, bd=0, font=('Calibri', 11)) # Modify the font of the body
-        style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # Modify the font of the headings
-        # style.layout("mystyle.Treeview", [('mystyle.Treeview.treearea', {'sticky': 'nswe'})]) # Remove the borders
+        style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # Modify the font of the headings        
 
         num_pairs = 15  # número de pares de columnas "inc" y "repro"
         
@@ -346,9 +541,7 @@ class Window(ctk.CTk):
         for i in range(num_pairs):
             cols.append(f"Inc{i+1}")
             self.datas.append(f"Inc{i+1}")
-            cols.append(f"Repro{i+1}")
-        # tree = ttk.Treeview(frame_table, columns=cols)
-
+            cols.append(f"Repro{i+1}")        
 
         tree = ttk.Treeview(frame_table,height=3,columns=cols,style="mystyle.Treeview") # definir cuantas columnas tendra la tabla
         tree.place(x=10,y=20, width=1500,height=400) # le
@@ -394,9 +587,39 @@ class Window(ctk.CTk):
         tree.configure(xscrollcommand=scroll_databaseH.set)
         k = 1
         for x in self.alumnos:
-            tree.insert("", "end", text=k, values=[x[2], x[1]] + [" ", " "]*num_pairs)
-            k+=1
-                        
+            # ,"vacio" if d[4] == [''] else d[4],
+            # print(x[-1])
+            matsfromdates = self.crearArray(x[-1],x[2])
+            # tree.insert("", "end", text=k, values=[x[2], x[1]] + [" ", " "]*num_pairs)
+            tree.insert("", "end", text=k, values=[x[2], x[1]," ", matsfromdates[0]," ", matsfromdates[1]," ", matsfromdates[2]," ", matsfromdates[3]," ", matsfromdates[4]," ",matsfromdates[5]," ", matsfromdates[6]," ", matsfromdates[7]," ", matsfromdates[8]," ", matsfromdates[9]," ", matsfromdates[10]," ", matsfromdates[11]," ", matsfromdates[12]," ", matsfromdates[13]," ", matsfromdates[14]] )
+            k+=1            
+    
+    def crearArray(self,dataF,matricula):        
+        rs = json.dumps(dataF)
+        materias = json.loads(rs)
+        
+        tresdigitos = str(matricula)[:3]
+        
+        array = [" "," "," "," "," "," "," "," "," "," "," "," "," "," "," "]
+        
+        # print(materias)        
+        # print(matricula)
+
+        # print(tresdigitos)
+
+        # print(self.fechas[tresdigitos])
+
+        # print(self.fechas["183"]["ENERO-ABRIL 2021"])
+
+        for key, value in materias.items():                        
+            # print(key, value)
+            # print(self.fechas[tresdigitos][value])
+            array[self.fechas[tresdigitos][value]-1] += key
+        
+        # print(array)
+
+        return array
+
     def viewLook(self,matricula):
         #expediente
         self.navigate()                
@@ -458,12 +681,10 @@ class Window(ctk.CTk):
         scroll_databaseH.place(x=75, y=520, width=1300)
         tree.configure(xscrollcommand=scroll_databaseH.set)
         
-        # k = 1
-        # for x in self.alumnos:
-        #     tree.insert("", "end", text=k, values=[x[2], x[1]] + [" ", " "]*num_pairs)
-        #     k+=1
-        print(alumnito)
-        tree.insert("", "end", text=1, values=[alumnito[0][2], alumnito[0][1]] + [" ", " "]*num_pairs)
+        
+        matsfromdates = self.crearArray(alumnito[0][-1],alumnito[0][2])
+        
+        tree.insert("", "end", text=1, values=[alumnito[0][2], alumnito[0][1]," ", matsfromdates[0]," ", matsfromdates[1]," ", matsfromdates[2]," ", matsfromdates[3]," ", matsfromdates[4]," ",matsfromdates[5]," ", matsfromdates[6]," ", matsfromdates[7]," ", matsfromdates[8]," ", matsfromdates[9]," ", matsfromdates[10]," ", matsfromdates[11]," ", matsfromdates[12]," ", matsfromdates[13]," ", matsfromdates[14]] )            
         
     def reco(self):
         #print(self.asignaturas)
@@ -488,10 +709,10 @@ class Window(ctk.CTk):
         
         self.bottom_frame4.grid(padx=0, pady=0, row=1, column=0)
 
-        info_label = ctk.CTkLabel(master=self.bottom_frame4, corner_radius=0, text="Trayectoria", font=("Helvetica",  24, 'bold'))
+        info_label = ctk.CTkLabel(master=self.bottom_frame4, corner_radius=0, text="Trayectoria por alumno", font=("Helvetica",  24, 'bold'))
         info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
 
-        frame_table = ctk.CTkFrame(master=self.bottom_frame4, width= 1100, height= 405,corner_radius=0)
+        frame_table = ctk.CTkFrame(master=self.bottom_frame4, width= 1200, height= 405,corner_radius=0)
         frame_table.place(relx=0.5, rely=0.55, anchor=tk.CENTER)
 
 
@@ -781,8 +1002,225 @@ class Window(ctk.CTk):
 
         self.get_asignaturas(frame_leftB, button_area, frame_right, 5)
 
-    def veri(self):
+    def viewTrayeG(self):
+        self.navigate()
+        self.bottom_frame20.grid(padx=0, pady=0, row=1, column=0)
+
+        info_label = ctk.CTkLabel(master=self.bottom_frame20, corner_radius=0, text="Trayectoria por generacion", font=("Helvetica",  24, 'bold'))
+        info_label.place(relx=0.15, rely=0.12, anchor=tk.CENTER)
+
+        gen = self.selectGeneraciones()
         
+        i= 0.1
+        for x in gen:
+            print(x[0])                
+            btnLod = ctk.CTkButton(master=self.bottom_frame20, text=f'{x[0]}', width= 80, height= 40, command=lambda matricula=x[0]: self.viewTrayeGChoice(matricula), corner_radius=3, fg_color="#404CBB", text_color="white", hover_color="#4554DD", font=("Helvetica",  15, 'bold'))
+            btnLod.place(relx= i, rely=0.32, anchor=tk.CENTER)            
+            i+=0.1            
+
+    def viewTrayeGChoice(self,matricula):
+        self.navigate()
+        self.bottom_frame21.grid(padx=0, pady=0, row=1, column=0)
+
+        info_label = ctk.CTkLabel(master=self.bottom_frame21, corner_radius=0, text="Trayectoria por generacion", font=("Helvetica",  24, 'bold'))
+        info_label.place(relx=0.15, rely=0.06, anchor=tk.CENTER)
+        
+
+        def backs():  
+            info_labelI.destroy()
+            self.navigate()          
+            self.viewTrayeG()                                    
+
+        self.Back = ctk.CTkButton(self.bottom_frame21, text="Regresar", width= 140, height= 35, command=backs, corner_radius=3, fg_color="#E5E5E5", text_color="black", hover_color="#EEEEEE", font=("Helvetica",  15))
+        self.Back.place(relx= 0.8, rely=0.1, anchor=tk.CENTER)
+
+        info_labelI = ctk.CTkLabel(self.bottom_frame21, corner_radius=0, text=f'Periodo de ingreso: {self.inicios[str(matricula)]}', font=("Helvetica",  16, 'bold'))
+        info_labelI.place(relx=0.15, rely=0.20, anchor=tk.CENTER)
+        
+
+        info_labelm = ctk.CTkLabel(self.bottom_frame21, corner_radius=0, text=f'Matricula: {str(matricula)}', font=("Helvetica",  16, 'bold'))
+        info_labelm.place(relx=0.05, rely=0.25, anchor=tk.CENTER)
+
+                      
+        frame_table = ctk.CTkFrame(self.bottom_frame21, width= 1200, height= 385,corner_radius=0)
+        frame_table.place(relx=0.5, rely=0.65, anchor=tk.CENTER)
+        
+
+        datos = self.selectTrayByGeneraciones(matricula)
+       
+        if datos == []:
+            print("se crea")
+            self.intertUser2(matricula)
+            datos = self.selectTrayByGeneraciones(matricula)    
+       
+
+        style = ttk.Style()
+        style.configure("mystyle.Treeview", highlightthickness=0, bd=0, font=('Calibri', 11)) # Modify the font of the body
+        style.configure("mystyle.Treeview.Heading", font=('Calibri', 13,'bold')) # Modify the font of the headings        
+        
+        
+        cols = ["cuatrimestre","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"]                
+
+        tree = ttk.Treeview(frame_table,height=3,columns=cols,style="mystyle.Treeview") # definir cuantas columnas tendra la tabla
+        tree.place(x=10,y=20, width=1500,height=400) # le
+
+
+        tree.heading("#0", text="ID",anchor="w")        
+        tree.heading("cuatrimestre", text="cuatrimestre",anchor="w")
+        tree.heading("1", text="1",anchor="w")
+        tree.heading("2", text="2",anchor="w")
+        tree.heading("3", text="3",anchor="w")
+        tree.heading("4", text="4",anchor="w")
+        tree.heading("5", text="5",anchor="w")
+        tree.heading("6", text="6",anchor="w")
+        tree.heading("7", text="7",anchor="w")
+        tree.heading("8", text="8",anchor="w")
+        tree.heading("9", text="9",anchor="w")
+        tree.heading("10", text="10",anchor="w")
+        tree.heading("11", text="11",anchor="w")
+        tree.heading("12", text="12",anchor="w")
+        tree.heading("13", text="13",anchor="w")
+        tree.heading("14", text="14",anchor="w")
+        tree.heading("15", text="15",anchor="w")
+      
+         # para definir la scrollbar vertical
+        scroll_databaseV = Scrollbar(frame_table, orient="vertical", command=tree.yview)
+        scroll_databaseV.place(x=10, y=20, height=400)
+        tree.configure(yscrollcommand=scroll_databaseV.set)
+
+        #para definir la scrollbar hortizontal
+        scroll_databaseH = Scrollbar(frame_table, orient="horizontal", command=tree.xview)
+        scroll_databaseH.place(x=10, y=420, width=1300)
+        tree.configure(xscrollcommand=scroll_databaseH.set)
+        
+   
+        mat = datos[0][0]
+        periodo_academico= datos[0][-1]
+        cantidad_alumnos = datos[0][1]
+        reprobacion= datos[0][2]
+        rezago= datos[0][3]
+        retencion= datos[0][4]
+        abandono_escolar= datos[0][5]
+        desercion= datos[0][6]
+        terminaron = datos[0][7]
+        eficiencia_terminal= datos[0][8]
+        titulados= datos[0][9]
+
+        tree.insert("", "end", text=1, values= ["periodo_academico"]+periodo_academico[0:] )
+        tree.insert("", "end", text=1, values= ["cantidad_alumnos"]+cantidad_alumnos[0:] )
+        tree.insert("", "end", text=1, values= ["reprobacion"]+reprobacion[0:] )
+        tree.insert("", "end", text=1, values= ["rezago"]+rezago[0:] )
+        tree.insert("", "end", text=1, values= ["retencion"]+retencion[0:] )
+        tree.insert("", "end", text=1, values= ["abandono_escolar"]+abandono_escolar[0:] )
+        tree.insert("", "end", text=1, values= ["desercion"]+desercion[0:] )
+        tree.insert("", "end", text=1, values= ["terminaron"]+terminaron[0:] )
+        tree.insert("", "end", text=1, values= ["eficiencia_terminal"]+eficiencia_terminal[0:] )
+        tree.insert("", "end", text=1, values= ["titulados"]+titulados[0:] )
+
+        def on_cell_click(event):
+            # hacer algo cuando se hace clic en la celda
+                        
+            row_id = event.widget.focus()
+            col_id = event.widget.identify_column(event.x)
+            col_title = event.widget.heading(col_id)['text']
+            titulito = event.widget.item(row_id)['values'][0]
+
+            # print(column_id)
+            cell_value = event.widget.item(row_id)['values'][int(col_id[1:])-1]                                  
+
+            print(cell_value) #valor de la columna
+            print(titulito) #titulo para ver a que arreglo se le colocara el nuevo valor
+            print(col_title) # el numero de columna que es el numero de cuatrimestre
+        # ,campo,dato,matricula
+            tipo = ""
+            new = []
+            if col_title != "cuatrimestre":
+                if titulito != "periodo_academico":
+                    new_value = simpledialog.askstring("Editar celda", f"Ingrese un nuevo valor para la celda:", initialvalue=cell_value)                                                    
+
+                    if titulito == "cantidad_alumnos":
+                        tipo = "cantidad_alumnos"
+                        cantidad_alumnos[int(col_title)-1] = int(new_value)
+                        new = cantidad_alumnos
+
+                    elif titulito == "reprobacion":
+                        tipo = "reprobacion"
+                        reprobacion[int(col_title)-1] = int(new_value)
+                        new = reprobacion
+
+                    elif titulito == "rezago":
+                        tipo = "rezago"
+                        rezago[int(col_title)-1] = int(new_value)
+                        new = rezago
+
+                    elif titulito == "retencion":
+                        tipo = "retencion"
+                        retencion[int(col_title)-1] = int(new_value)
+                        new = retencion
+
+                    elif titulito == "abandono_escolar":
+                        tipo = "abandono_escolar" 
+                        abandono_escolar[int(col_title)-1] = int(new_value)
+                        new = abandono_escolar
+
+                    elif titulito == "desercion":
+                        tipo = "desercion"
+                        desercion[int(col_title)-1] = int(new_value)
+                        new = desercion
+
+                    elif titulito == "terminaron":
+                        tipo = "terminaron"
+                        terminaron[int(col_title)-1] = int(new_value)
+                        new = terminaron
+
+                    elif titulito == "eficiencia_terminal":
+                        tipo = "eficiencia_terminal"
+                        eficiencia_terminal[int(col_title)-1] = int(new_value)
+                        new = eficiencia_terminal
+
+                    elif titulito == "titulados":
+                        tipo = "titulados"
+                        titulados[int(col_title)-1] = int(new_value)
+                        new = titulados
+
+                    self.updateTrayectoriaByGene(titulito,new,matricula)
+                    print("el tipo desues del seleccion: ",str(tipo))     
+                    self.navigate()
+                    self.viewTrayeGChoice(matricula)   
+
+                else:
+                    self.show_message("Mensaje", "Celda no editable")
+                
+            else:
+                self.show_message("Mensaje", "Celda no editable")
+           
+
+            
+            
+
+        tree.bind('<ButtonRelease-1>', on_cell_click)
+
+    def selectGeneraciones(self):
+        conn = psycopg2.connect(
+               user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
+        )
+        cursor = conn.cursor()        
+
+        cursor.execute(f'SELECT * FROM generaciones')
+        
+        results = cursor.fetchall()               
+            
+        cursor.close()
+        conn.close()
+        
+        return results
+    
+    def veri(self):
+       
         for x in self.asignaturas:
             print(x)
 
@@ -907,6 +1345,8 @@ class Window(ctk.CTk):
                         a.append(str(texto))                    
                     print(texto)
                     print(a)
+                    tk.messagebox.showinfo("Subir nota", "Nota subida con éxito.")
+
                     self.updateInciN(matri,cont,a)  
 
                 g.delete('1.0', END)
@@ -1003,11 +1443,11 @@ class Window(ctk.CTk):
                    
     def getByMatricula(self,matricula):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+             user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()        
         # Ejecuta una consulta SQL
@@ -1024,11 +1464,11 @@ class Window(ctk.CTk):
     
     def getByMatriculaIN(self,matricula):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+             user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()        
         # Ejecuta una consulta SQL
@@ -1045,11 +1485,11 @@ class Window(ctk.CTk):
             
     def createInci(self,matricula,cuatri,datas):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+             user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
             )
         cursor = conn.cursor()        
         sql = "INSERT INTO incidencias (matriculaalumno, uplo,cuatri) VALUES (%s, %s, %s)"
@@ -1065,11 +1505,11 @@ class Window(ctk.CTk):
     
     def createInciN(self,matricula,cuatri,datas):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+             user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
             )
         cursor = conn.cursor()        
 
@@ -1086,11 +1526,11 @@ class Window(ctk.CTk):
 
     def updateInci(self,matricula,cuatri,datas):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+             user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
             )
         cursor = conn.cursor()        
         
@@ -1107,11 +1547,11 @@ class Window(ctk.CTk):
 
     def updateInciN(self,matricula,cuatri,datas):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+            user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
             )
         cursor = conn.cursor()        
         
@@ -1128,11 +1568,11 @@ class Window(ctk.CTk):
         
     def getIncidencias(self,matricula,cuatri):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+              user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()        
         cursor.execute(f"SELECT uplo FROM incidencias WHERE matriculaalumno={matricula} and cuatri={cuatri}" )
@@ -1154,11 +1594,11 @@ class Window(ctk.CTk):
     
     def getIncidenciasN(self,matricula,cuatri):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()        
         cursor.execute(f"SELECT notas FROM incidencias WHERE matriculaalumno={matricula} and cuatri={cuatri}" )
@@ -1280,11 +1720,11 @@ class Window(ctk.CTk):
         
     def selectData(self):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+             user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()
 
@@ -1306,12 +1746,11 @@ class Window(ctk.CTk):
 
     def selectDataA(self):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+           user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia",
-            client_encoding='utf8'
+            port=self.portdb,   
+            database=self.namedb
 
         )
         cursor = conn.cursor()
@@ -1345,11 +1784,11 @@ class Window(ctk.CTk):
     def conectar(self):
 
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+           user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()
 
@@ -1366,11 +1805,11 @@ class Window(ctk.CTk):
 
     def getUsuers(self):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+              user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()
 
@@ -1382,15 +1821,15 @@ class Window(ctk.CTk):
         cursor.close()
         conn.close()
 
-        return results
+        return results    
     
     def intertUser(self,nombre,tipo,usuario,passw):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+             user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
             )
         cursor = conn.cursor()        
         sql = "INSERT INTO users (nombre, tipo,usuario,passw) VALUES (%s, %s, %s, %s)"
@@ -1406,11 +1845,11 @@ class Window(ctk.CTk):
 
     def selectDataTra(self):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()
 
@@ -1428,11 +1867,11 @@ class Window(ctk.CTk):
            
     def updateTrayectoria(self,campo,dato,matricula):
                 conn = psycopg2.connect(
-                        user="postgres",
-                        password="carrera10",
-                        host="localhost",
-                        port="5432",   
-                        database="estancia"
+                        user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
                     )
                 cursor = conn.cursor()                        
                                  
@@ -1447,11 +1886,11 @@ class Window(ctk.CTk):
 
     def selectDataTraByM(self,matricula):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+              user=self.usuariodb,
+            password=self.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=self.portdb,   
+            database=self.namedb
         )
         cursor = conn.cursor()
 
@@ -1463,3 +1902,122 @@ class Window(ctk.CTk):
         conn.close()
 
         return results[0]
+    
+    def selectTrayByGeneraciones(self,matricula):
+        conn = psycopg2.connect(
+             user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
+        )
+        cursor = conn.cursor()        
+
+        cursor.execute(f'SELECT * FROM trayectoriageneral where mat = {matricula}')
+        
+        results = cursor.fetchall()
+        
+        # print(results)
+            
+        cursor.close()
+        conn.close()
+        
+        return results
+
+    def intertUser2(self,matricula):
+        conn = psycopg2.connect(
+                  user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
+            )
+        cursor = conn.cursor()        
+                                
+        cantidad_alumnos = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        reprobacion=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        rezago=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        retencion=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        abandono_escolar=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        desercion=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        terminaron =[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        eficiencia_terminal=[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+        titulados= [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]           
+        
+        tresdigitos = str(matricula)[:3]
+        dete = self.fechas[tresdigitos]
+
+
+        # print(dete)
+
+        alumnitos = self.selectdatasfromUsuarioBy(int(tresdigitos))
+
+        # print(alumnitos)
+        cont = 0
+
+        for x in alumnitos:
+            # cont += 1
+            print(x[-1])
+            for key, value in x[-1].items():                        
+                print(key, value)
+                print(self.fechas[tresdigitos][value])
+                reprobacion[self.fechas[tresdigitos][value]-1] += 1
+                rezago[self.fechas[tresdigitos][value]-1] += 1
+
+            # print(self.fechas[tresdigitos][value])
+            # array[self.fechas[tresdigitos][value]-1] += key
+        
+        
+        sql = "INSERT INTO trayectoriageneral (mat,cantidad_alumnos,reprobacion,rezago,retencion,abandono_escolar,desercion,terminaron,eficiencia_terminal,titulados,periodo_academico) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"        
+        
+        valores = (matricula,cantidad_alumnos,reprobacion,rezago,retencion,abandono_escolar,desercion,terminaron,eficiencia_terminal,titulados,self.periodosAca[str(matricula)])       
+
+        cursor.execute(sql, valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+
+    def createReprobacion(self):
+        pass
+        
+    def updateTrayectoriaByGene(self,campo,dato,matricula):
+                conn = psycopg2.connect(
+                          user=self.usuariodb,
+            password=self.passdb,
+            host="localhost",
+            port=self.portdb,   
+            database=self.namedb
+                    )
+                cursor = conn.cursor()                        
+                                 
+                valores = (dato,matricula)                                
+                sql = "UPDATE trayectoriageneral SET {} = %s WHERE mat = %s".format(campo)
+                cursor.execute(sql, valores)
+
+                conn.commit()
+
+                cursor.close()
+                conn.close()
+
+
+    def selectdatasfromUsuarioBy(self,matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+        
+        cursor.execute(f"SELECT * FROM alumnos WHERE CAST(matricula AS TEXT) LIKE '{matricula}%'")
+
+        resultado = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+
+        return resultado

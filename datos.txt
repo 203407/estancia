@@ -1,0 +1,4 @@
+postgres
+carrera10
+5432
+estancia

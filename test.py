@@ -222,17 +222,70 @@ def intertUser2():
        # Definimos los dos JSON
         json_string1 = '{"as2":"perido 202--20", "dddds ":"perido 10023"}'        
 
-        # Convertimos los dos JSON en objetos Python
-        # json_obj1 = json.loads(json_string1)        
-
-        # Combinamos los dos objetos Python en uno solo
-        # new_json_obj = {**json_obj1, **json_obj2}
-
+        data = {
+                "Periodo academico":["","",""],
+                "Cantidad alumnos" : [0,0,0],
+                "Reprobacion":[0,0,0],
+                "Rezago":[0,0,0],
+                "Retencion":[0,0,0],
+                "Abandono escolar":[0,0,0],
+                "Desercion":[0,0,0],
+                "Terminacion": [0,0,0],
+                "Eficiencia Terminal":[0,0,0],
+                "Titulados":[0,0,0]            
+        } 
+   
         # Convertimos el objeto Python resultante en un nuevo JSON
-        new_json_string = json.dumps(json_string1)
+        new_json_string = json.dumps(data)
+        matricula = 183
+        sql = "INSERT INTO tes (data,mat) VALUES (%s,%s)"
+        valores = (new_json_string)       
+
+        cursor.execute(sql, (valores,))
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
         
-        sql = "INSERT INTO tes (testd,dds) VALUES (%s,%s)"
-        valores = (new_json_string,'l')       
+# intertUser2()
+
+
+def intertUser2():
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+            )
+        cursor = conn.cursor()        
+                        
+        periodo_academico= ["","",""]
+        cantidad_alumnos = [0,0,0]
+        reprobacion=[0,0,0]
+        rezago=[0,0,0]
+        retencion=[0,0,0]
+        abandono_escolar=[0,0,0]
+        desercion=[0,0,0]
+        terminaron = [0,0,0]
+        eficiencia_terminal= [0,0,0]
+        titulados= [0,0,0]            
+                    
+        matricula = 183
+        
+        periodosAca = {
+
+            "183": ["SEPTIEMBRE-DICIEMBRE 2018","ENERO-ABRIL 2019","MAYO-AGOSTO 2019","SEPTIEMBRE-DICIEMBRE 2019","ENERO-ABRIL 2020","MAYO-AGOSTO 2020","SEPTIEMBRE-DICIEMBRE 2020","ENERO-ABRIL 2021","MAYO-AGOSTO 2021","SEPTIEMBRE-DICIEMBRE 2021","ENERO-ABRIL 2022","MAYO-AGOSTO 2022","SEPTIEMBRE-DICIEMBRE 2022","ENERO-ABRIL 2023","MAYO-AGOSTO 2023"],
+
+            "191": ["ENERO-ABRIL 2019","MAYO-AGOSTO 2019","SEPTIEMBRE-DICIEMBRE 2019","ENERO-ABRIL 2020","MAYO-AGOSTO 2020","SEPTIEMBRE-DICIEMBRE 2020","ENERO-ABRIL 2021","MAYO-AGOSTO 2021","SEPTIEMBRE-DICIEMBRE 2021","ENERO-ABRIL 2022","MAYO-AGOSTO 2022","SEPTIEMBRE-DICIEMBRE 2022","ENERO-ABRIL 2023","MAYO-AGOSTO 2023","SEPTIEMBRE-DICIEMBRE 2023"],        
+        
+        }
+
+        sql = "INSERT INTO trayectoriageneral (mat,cantidad_alumnos,reprobacion,rezago,retencion,abandono_escolar,desercion,terminaron,eficiencia_terminal,titulados,periodo_academico) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        # sql = "INSERT INTO trayectoriageneral (mat,periodo_academico) VALUES (%s,%s)"
+        
+        valores = (matricula,cantidad_alumnos,reprobacion,rezago,retencion,abandono_escolar,desercion,terminaron,eficiencia_terminal,titulados,periodosAca["183"])       
 
         cursor.execute(sql, valores)
 
@@ -242,6 +295,7 @@ def intertUser2():
         conn.close()
         
 # intertUser2()
+
 
 def selectdatas():
         conn = psycopg2.connect(
@@ -350,4 +404,116 @@ def selectDataTraByM(matricula):
 
         # return results
 
-selectDataTraByM(183392)
+# selectDataTraByM(183392)
+
+
+def selectTrayByGeneraciones(matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()        
+
+        cursor.execute(f'SELECT * FROM trayectoriageneral where mat = {matricula}')
+        
+        results = cursor.fetchall()
+        
+        print(results[0][-1])
+            
+        cursor.close()
+        conn.close()
+        
+        return results
+
+
+
+# selectTrayByGeneraciones(183)
+
+
+
+
+def intertGeneracion(matricula):
+        
+        conn = psycopg2.connect(
+                user="postgres",
+                password="carrera10",
+                host="localhost",
+                port="5432",   
+                database="estancia"
+        )
+
+        cursor = conn.cursor()        
+                                
+        
+        sql = "INSERT INTO generaciones (matri) VALUES (%s)"
+        valores = (matricula,)
+
+        cursor.execute(sql, valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+# intertGeneracion(203)
+
+
+def selectGeneraciones(matricula):
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()        
+
+        cursor.execute(f'SELECT * FROM generaciones where matri = {matricula}')
+        
+        results = cursor.fetchall()
+        
+        response = 0
+        if results != []:
+                print(results)
+                response = 1
+        else:
+                print("no hya nada")
+            
+        cursor.close()
+        conn.close()
+        
+        return response
+
+# selectGeneraciones(2203)
+
+
+def selectdatas():
+        conn = psycopg2.connect(
+            user="postgres",
+            password="carrera10",
+            host="localhost",
+            port="5432",   
+            database="estancia"
+        )
+        cursor = conn.cursor()
+
+        prefijo = 183
+
+        cursor.execute(f"SELECT * FROM alumnos WHERE CAST(matricula AS TEXT) LIKE '{prefijo}%'")
+
+        resultado = cursor.fetchall()
+        
+
+
+        print(resultado)
+                        
+            
+        cursor.close()
+        conn.close()
+
+        return resultado
+
+selectdatas()

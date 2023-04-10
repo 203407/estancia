@@ -11,33 +11,110 @@ import psycopg2
 from alumno import Alumno
 
 
+# def get_reprobados(pdf_reader, asignatura, periodo):
+#     cont = 0
+   
+#     for page_num in range(len(pdf_reader.pages)):
+#         page = pdf_reader.pages[page_num]
+#         text = page.extract_text()
+#         lines = text.split('\n')
+#         for line in lines:
+#             # print(lines)
+#             if cont > 5:
+#                 match = re.match(r'(\b\w+\b.*?)(\d+\s+\d+)', line)
+#                 if match != None:
+#                     part1 = match.group(1)
+#                     part2 = match.group(2)
+#                     calificaciones = part2.split(" ")
+#                     # print(calificaciones)
+#                     for c in calificaciones:
+#                         if int(c) < 70:
+#                             id_unico = uuid.uuid4()
+#                             x = ''+  str(id_unico) 
+#                             a = Alumno(x,part1, asignatura, periodo, calificaciones)   
+
+#                             resultado = getByMatricula(a.m)
+#                             mats = {f'{asignatura}':f'{periodo}'}
+#                             new_json_string = json.dumps(mats)
+#                             nn = json.loads(new_json_string)
+
+#                             if resultado == []:
+#                                 insertarData(a.id,a.nombre,a.m,asignatura,periodo,new_json_string)                                                     
+#                                 createTrayecotira(a.m)                                
+#                             else:
+                                
+#                                 rs = json.dumps(resultado[0][-1])
+#                                 materias = json.loads(rs)
+                                                                
+#                                 # print(new_json_string)
+
+#                                 if all(item in materias.items() for item in nn.items()):
+#                                     print("El contenido de 'a' está presente en 'materias'")
+#                                 else:
+#                                     print("El contenido de 'a' no está presente en 'materias'")                                
+#                                     materias.update(nn)       
+#                                     ma = json.dumps(materias)                             
+#                                     updateusuario(a.m,ma)
+#                                     print("el alumno ya esta en la base de datos pero se actualizo")                            
+                                                                                               
+#                             break
+
+#             cont += 1
+
+
+
 def get_reprobados(pdf_reader, asignatura, periodo):
     cont = 0
-   
     for page_num in range(len(pdf_reader.pages)):
         page = pdf_reader.pages[page_num]
         text = page.extract_text()
         lines = text.split('\n')
         for line in lines:
-            # print(lines)
             if cont > 5:
-                match = re.match(r'(\b\w+\b.*?)(\d+\s+\d+)', line)
-                if match != None:
-                    part1 = match.group(1)
-                    part2 = match.group(2)
-                    calificaciones = part2.split(" ")
-                    # print(calificaciones)
-                    for c in calificaciones:
-                        if int(c) < 70:
+                
+                line = line.replace("100", "100 ")
+                # print(line)
+                match = re.search(r'\d+\s\d+(?:\s\d+)*\s[\d\.]+', line)
+                if match:
+                    cal = match.group()
+                    calificaciones = cal.split(" ")
+                    datos = line.replace(cal, "")
+                    #print(datos)
+                    #print(calificaciones)
+                    if len(calificaciones) > 3:
+                        if float(calificaciones[-1]) < 70.0:
+                            #print(calificaciones[-1])
+                            # a = Alumno(datos, asignatura, periodo, calificaciones)
+
+                            # win.alumnos.append(a)
+
                             id_unico = uuid.uuid4()
                             x = ''+  str(id_unico) 
-                            a = Alumno(x,part1, asignatura, periodo, calificaciones)   
+                            # print(asignatura)
+
+                            if periodo == " SEPTIEMBRE-DICIEMBRE 2020":
+                                 print("si es igual")
+                                 periodo = periodo.lstrip()
+                            
+                            if asignatura == " Calidad del Software":
+                                 asignatura = asignatura.lstrip()
+
+                            a = Alumno(x,datos, asignatura, periodo, calificaciones)   
 
                             resultado = getByMatricula(a.m)
+                            # print(periodo)
                             mats = {f'{asignatura}':f'{periodo}'}
                             new_json_string = json.dumps(mats)
                             nn = json.loads(new_json_string)
 
+
+                            tresdigitos = str(a.m)[:3]
+                            print(tresdigitos)
+                            ad = selectGeneraciones(tresdigitos)
+
+                            if ad == 0:
+                                 intertGeneracion(tresdigitos)
+                        
                             if resultado == []:
                                 insertarData(a.id,a.nombre,a.m,asignatura,periodo,new_json_string)                                                     
                                 createTrayecotira(a.m)                                
@@ -55,19 +132,17 @@ def get_reprobados(pdf_reader, asignatura, periodo):
                                     materias.update(nn)       
                                     ma = json.dumps(materias)                             
                                     updateusuario(a.m,ma)
-                                    print("el alumno ya esta en la base de datos pero se actualizo")                            
-                                                                                               
-                            break
-
+                                    print("el alumno ya esta en la base de datos pero se actualizo")   
+                            
             cont += 1
-                
+
 def insertarData(id,nombre,matricula,materiaR,periodo,mats):
     conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=win.usuariodb,
+            password=win.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=win.portdb,   
+            database=win.namedb
         )
     cursor = conn.cursor()
 
@@ -102,7 +177,7 @@ def get_periodo(pdf_reader):
                 match = re.search(rule, line)
                 pos = match.start() + 1
                 lineFormat = line[:pos]
-                periodo = lineFormat.replace("PERIODO: ", "")
+                periodo = lineFormat.replace("PERIODO:", "")
                 break
         if found:
             break
@@ -122,7 +197,9 @@ def get_asignatura(pdf_reader):
             if search in line:
                 found = True
                 lineFormat = re.split(rule, line)
-                value = lineFormat[0].replace("ASIGNATURA: ", "")
+                value = lineFormat[0].replace("ASIGNATURA:", "")
+                if value == " Calidad del Software":
+                                 value = value.lstrip()
                 win.show_message("Mensaje", "Se actualizaron los datos")
                 break
         if found:
@@ -165,11 +242,11 @@ def get_data():
 
 def insertarDataA(asignatura):
     conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=win.usuariodb,
+            password=win.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=win.portdb,   
+            database=win.namedb
         )
     cursor = conn.cursor()
 
@@ -184,11 +261,11 @@ def insertarDataA(asignatura):
 
 def createTrayecotira(matricula):
         conn = psycopg2.connect(
-                user="postgres",
-                password="carrera10",
-                host="localhost",
-                port="5432",   
-                database="estancia"
+                 user=win.usuariodb,
+            password=win.passdb,
+            host="localhost",
+            port=win.portdb,   
+            database=win.namedb
             )
         cursor = conn.cursor()      
 
@@ -214,14 +291,13 @@ def select_file():
     label = ctk.CTkLabel(master=win.bottom_frame, text=FILEPATH)
     label.place(relx= 0.5, rely=0.45, anchor=tk.CENTER)
 
-
 def getByMatricula(matricula):
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=win.usuariodb,
+            password=win.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=win.portdb,   
+            database=win.namedb
         )
         cursor = conn.cursor()        
         # Ejecuta una consulta SQL
@@ -236,14 +312,13 @@ def getByMatricula(matricula):
 
         return results
 
-
 def updateusuario(matricula,datase):
             conn = psycopg2.connect(
-                    user="postgres",
-                    password="carrera10",
-                    host="localhost",
-                    port="5432",   
-                    database="estancia"
+                    user=win.usuariodb,
+            password=win.passdb,
+            host="localhost",
+            port=win.portdb,   
+            database=win.namedb
                 )
             cursor = conn.cursor()                    
 
@@ -259,14 +334,13 @@ def updateusuario(matricula,datase):
             cursor.close()
             conn.close()
             
-
 def selectdatasMaterias():
         conn = psycopg2.connect(
-            user="postgres",
-            password="carrera10",
+            user=win.usuariodb,
+            password=win.passdb,
             host="localhost",
-            port="5432",   
-            database="estancia"
+            port=win.portdb,   
+            database=win.namedb
         )
         cursor = conn.cursor()
 
@@ -283,6 +357,55 @@ def selectdatasMaterias():
         conn.close()
 
         return results
+
+def intertGeneracion(matricula):
+        
+        conn = psycopg2.connect(
+             user=win.usuariodb,
+            password=win.passdb,
+            host="localhost",
+            port=win.portdb,   
+            database=win.namedb
+        )
+
+        cursor = conn.cursor()        
+                                
+        
+        sql = "INSERT INTO generaciones (matri) VALUES (%s)"
+        valores = (matricula,)
+
+        cursor.execute(sql, valores)
+
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+def selectGeneraciones(matricula):
+        conn = psycopg2.connect(
+           user=win.usuariodb,
+            password=win.passdb,
+            host="localhost",
+            port=win.portdb,   
+            database=win.namedb
+        )
+        cursor = conn.cursor()        
+
+        cursor.execute(f'SELECT * FROM generaciones where matri = {matricula}')
+        
+        results = cursor.fetchall()
+        
+        response = 0
+        if results != []:
+                # print(results)
+                response = 1
+        else:
+                print("no hya nada")
+            
+        cursor.close()
+        conn.close()
+        
+        return response
 
 if __name__ == "__main__":
     win = Window(select_file, get_data)
